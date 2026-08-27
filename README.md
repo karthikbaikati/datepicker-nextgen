@@ -1,4 +1,4 @@
-<h1 align="center">datepicker-nextgen</h1>
+<h1 align="center">DatePicker-NextGen</h1>
 
 <p align="center">
   A headless-first, timezone-safe, fully accessible date picker for React and vanilla JS — with a production-grade default look.
