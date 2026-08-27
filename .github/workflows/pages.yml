@@ -1,9 +1,25 @@
 name: Deploy demo to GitHub Pages
 
+# The demo is a shop window for the published package, so it follows releases
+# rather than `main`. Deploying from `main` would advertise unreleased
+# behaviour: someone sees a feature on the demo, runs `npm i`, and does not get
+# it.
+#
+# `workflow_run` is used rather than `release: [published]` on purpose. The
+# release is created by the release workflow using GITHUB_TOKEN, and GitHub
+# deliberately does not let a GITHUB_TOKEN-created event trigger another
+# workflow — a `release` trigger would simply never fire. `workflow_run` does.
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: ['Release to npm']
+    types: [completed]
+  # Manual deploys, for re-publishing a release or previewing a branch.
   workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Tag, branch or SHA to deploy (defaults to the latest release tag)'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -16,15 +32,44 @@ concurrency:
 
 jobs:
   build:
+    # Never publish a demo for a release that failed to ship.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
+      - name: Resolve the ref to deploy
+        id: ref
+        env:
+          INPUT_REF: ${{ inputs.ref }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          if [ -n "$INPUT_REF" ]; then
+            echo "ref=$INPUT_REF" >> "$GITHUB_OUTPUT"
+          elif [ -n "$RUN_SHA" ]; then
+            echo "ref=$RUN_SHA" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.ref.outputs.ref }}
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+
       - run: npm ci
+
+      # The demo builds from source, so a demo that compiles is not proof the
+      # library is sound. Gate the deploy on the same checks CI runs.
+      - name: Verify
+        run: npm run lint && npm run typecheck && npm test
+
       - run: npm run demo:build
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

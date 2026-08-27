@@ -202,6 +202,22 @@ Maintainers only.
 3. `git push --follow-tags`.
 4. The `Release to npm` workflow runs `npm run verify`, publishes with provenance
    (`npm publish --provenance`), and opens a GitHub release with generated notes.
+5. `Deploy demo to GitHub Pages` then runs automatically, building the demo from the
+   released commit and publishing it.
+
+### Why the demo follows releases, not `main`
+
+The demo is a shop window for the published package. If it deployed from `main` it would
+show unreleased behaviour — someone sees a feature on the site, runs `npm i`, and does not
+get it. Deploying from the released commit keeps the two in step.
+
+To preview `main`, or to redeploy a release, run `Deploy demo to GitHub Pages` manually from
+the Actions tab; it takes an optional tag, branch or SHA.
+
+A note on the trigger: the Pages workflow keys off `workflow_run`, not `release: [published]`.
+The release is created by the release workflow using `GITHUB_TOKEN`, and GitHub deliberately
+refuses to let a `GITHUB_TOKEN`-created event start another workflow — a `release` trigger
+would never fire.
 
 Semver, strictly. The `dpng-` class names, the `data-*` attributes and the `--dpng-*` tokens are
 **public API** — renaming one is a breaking change.
