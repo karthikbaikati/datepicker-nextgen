@@ -1,0 +1,80 @@
+/*!
+ * datepicker-nextgen — "rose" theme
+ *
+ * A soft rose palette: pink-tinted hairlines, generous corner radii and a
+ * rose-600 accent that still clears WCAG AA against white (4.7:1).
+ *
+ *   <div class="dpng" data-theme="rose">
+ *
+ * Tokens only — every component rule lives in styles.css.
+ */
+
+.dpng[data-theme='rose'] {
+  --dpng-accent: #e11d48;
+  --dpng-accent-hover: #be123c;
+  --dpng-accent-contrast: #ffffff;
+  --dpng-accent-soft: #fff1f2;
+  --dpng-range-bg: #fff1f2;
+  --dpng-range-text: #9f1239;
+  --dpng-surface: #fffcfd;
+  --dpng-surface-elevated: #ffffff;
+  --dpng-text: #3f2027;
+  --dpng-text-muted: #8a6a73;
+  --dpng-text-subtle: #b79aa2;
+  --dpng-border: #fbeef1;
+  --dpng-border-strong: #f3d9df;
+  --dpng-hover-bg: #fdf2f4;
+  --dpng-disabled-text: #ddc4cb;
+  --dpng-today-color: #e11d48;
+  --dpng-weekday-color: #b79aa2;
+  --dpng-badge-bg: #fff1f2;
+  --dpng-badge-text: #be123c;
+  --dpng-blocked-color: #d4b3bb;
+  --dpng-preview-bg: #fdf7f8;
+  --dpng-ring: #e11d48;
+  --dpng-shadow: 0 1px 2px rgba(76, 5, 25, 0.05), 0 14px 34px -12px rgba(76, 5, 25, 0.18);
+  --dpng-card-border: rgba(76, 5, 25, 0.07);
+  --dpng-backdrop: rgba(76, 5, 25, 0.4);
+  --dpng-day-text: #5b3b43;
+  --dpng-invalid: #be123c;
+  --dpng-holiday-color: #a16207;
+  --dpng-radius: 12px;
+  --dpng-radius-card: 24px;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dpng[data-theme='rose'] {
+    --dpng-accent: #fb7185;
+    --dpng-accent-hover: #fda4af;
+    --dpng-accent-contrast: #2b0710;
+    --dpng-accent-soft: rgba(251, 113, 133, 0.16);
+    --dpng-range-bg: rgba(251, 113, 133, 0.18);
+    --dpng-range-text: #fecdd3;
+    --dpng-surface: #22141a;
+    --dpng-surface-elevated: #2e1c23;
+    --dpng-text: #fdf2f4;
+    --dpng-text-muted: #c5a3ac;
+    --dpng-text-subtle: #93737d;
+    --dpng-border: #35212a;
+    --dpng-border-strong: #4c333d;
+    --dpng-hover-bg: #2e1c23;
+    --dpng-disabled-text: #6b4b56;
+    --dpng-today-color: #fb7185;
+    --dpng-weekday-color: #93737d;
+    --dpng-badge-bg: rgba(251, 113, 133, 0.16);
+    --dpng-badge-text: #fda4af;
+    --dpng-blocked-color: #93737d;
+    --dpng-preview-bg: rgba(254, 205, 211, 0.08);
+    --dpng-ring: #fb7185;
+    --dpng-shadow: 0 1px 2px rgba(10, 2, 5, 0.45), 0 14px 34px -12px rgba(10, 2, 5, 0.75);
+    --dpng-card-border: rgba(254, 205, 211, 0.14);
+    --dpng-backdrop: rgba(16, 4, 8, 0.66);
+    --dpng-day-text: #e7ccd3;
+    --dpng-invalid: #fda4af;
+    --dpng-holiday-color: #fcd34d;
+
+    color-scheme: dark;
+  }
+}

@@ -1,0 +1,2753 @@
+/*
+ * Voyanta — the travel half of the showcase.
+ *
+ * SCOPING RULE (the one that matters): there is not a single `.dpng-*`
+ * selector in this file. The pickers on this page are themed only through the
+ * documented `--dpng-*` custom properties, declared in the `.vy-scope` blocks
+ * at the bottom and attached to each picker's own root through its `className`
+ * prop. Reaching into `.dpng-day` or `.dpng-card` from here would paper over
+ * exactly the defects this page exists to expose.
+ *
+ * MOTION: every keyframe animation, every parallax translation and the scroll
+ * reveals all live inside `@media (prefers-reduced-motion: no-preference)`.
+ * The finished state is the default state, so a reduced-motion visitor gets a
+ * complete, static page rather than a hidden one.
+ *
+ * This file loads after demo.css, so it also retunes the `--dx-*` tokens the
+ * developer half already uses — one coastal palette across the whole page,
+ * light and dark alike.
+ */
+
+/* ========================================================================== */
+/*  Tokens                                                                    */
+/* ========================================================================== */
+
+:root {
+  /* -- type --------------------------------------------------------------- */
+  --vy-serif:
+    'Fraunces', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
+  --vy-sans:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+
+  /* -- surfaces: white sand under a bright sky ------------------------------ */
+  --vy-sand: #f9fbfc;
+  --vy-shell: #ffffff;
+  --vy-dusk: #eaf5f7;
+  --vy-surface: #ffffff;
+  --vy-surface-2: #f1f8f9;
+  --vy-line: #dce9ed;
+  --vy-line-soft: #edf4f6;
+
+  /* -- ink ---------------------------------------------------------------- */
+  --vy-ink: #0b2027;
+  --vy-ink-2: #40606b;
+  /* 5.1:1 on sand and 4.6:1 on the darkest band. This token is used at
+     10-13px, so it has to clear AA on the *worst* surface, not the best. */
+  --vy-ink-3: #527079;
+
+  /* -- accents: the sea leads; coral is only a sunset note ----------------- */
+  --vy-tide: #077e8b;
+  --vy-tide-2: #086b76;
+  --vy-tide-soft: #e2f6f8;
+  --vy-shallow: #0f9aa4;
+  --vy-sea: #075e6b;
+  --vy-sunset: #c2452f;
+  --vy-indigo: #35618f;
+  --vy-on-accent: #ffffff;
+
+  --vy-focus: #077e8b;
+  --vy-shadow-sm: 0 1px 2px rgba(26, 48, 56, 0.05), 0 8px 20px -12px rgba(26, 48, 56, 0.26);
+  --vy-shadow: 0 1px 2px rgba(26, 48, 56, 0.05), 0 26px 50px -28px rgba(26, 48, 56, 0.38);
+  --vy-radius: 16px;
+  --vy-radius-lg: 24px;
+  --vy-gutter: clamp(1.1rem, 4vw, 2.75rem);
+  /* Page measure. Every full-width band reads this, so the whole layout
+     widens or narrows from one place. */
+  --vy-shell-max: 1280px;
+  --vy-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  /* -- the drawn coast, bright midday -------------------------------------- */
+  --vy-sky-1: #cfeaf4;
+  --vy-sky-2: #e2f3f7;
+  --vy-sky-3: #f2fafb;
+  --vy-sky-4: #fdfefe;
+  --vy-glow-1: rgba(255, 253, 244, 0.95);
+  --vy-glow-2: rgba(214, 244, 246, 0.42);
+  --vy-glow-3: rgba(200, 238, 242, 0);
+  --vy-sun: #fffdf2;
+  --vy-star: rgba(255, 255, 255, 0);
+  --vy-cloud: rgba(255, 255, 255, 0.82);
+  --vy-gull: rgba(41, 62, 72, 0.34);
+  --vy-boat: rgba(24, 46, 56, 0.42);
+  /* Deep at the horizon, aqua by the time it reaches the shore. */
+  --vy-water-1: #0b7f92;
+  --vy-water-2: #22b8c0;
+  --vy-water-3: #8fe3da;
+  /* The four bands stack, so each one only has to add its own difference. They
+     run deep to shallow on purpose: the water lightens as the sea-bed rises. */
+  --vy-band-a: rgba(11, 127, 146, 0.16);
+  --vy-band-b: rgba(34, 184, 192, 0.18);
+  --vy-band-c: rgba(143, 227, 218, 0.26);
+  --vy-band-d: rgba(224, 249, 245, 0.46);
+  --vy-crest: rgba(255, 255, 255, 0.46);
+  --vy-crest-near: rgba(255, 255, 255, 0.66);
+  --vy-glint: rgba(255, 255, 255, 0.78);
+  --vy-foam-1: rgba(255, 255, 255, 0.86);
+  --vy-foam-2: rgba(255, 255, 255, 0);
+  --vy-lace: rgba(255, 255, 255, 0.8);
+  --vy-sand-wet: #e4e7e4;
+  --vy-sand-dry: #f7f5ef;
+  --vy-sand-mark: rgba(120, 130, 128, 0.22);
+  --vy-frond: #24685c;
+  --vy-frond-opacity: 0.44;
+  --vy-arc: rgba(7, 126, 139, 0.5);
+
+  /* Scrim over the scene, so the hero copy always clears AA. */
+  --vy-scrim-1: rgba(249, 251, 252, 0.95);
+  --vy-scrim-2: rgba(249, 251, 252, 0.58);
+  --vy-scrim-3: rgba(249, 251, 252, 0);
+
+  /* -- the listing illustration ------------------------------------------ */
+  --vy-stay-sky-1: #d7eef5;
+  --vy-stay-sky-2: #f0fafb;
+  --vy-stay-sun: #fffdf0;
+  --vy-stay-far: #a8cbd0;
+  --vy-stay-sea-1: #12909e;
+  --vy-stay-sea-2: #93e6dc;
+  --vy-stay-swell: rgba(255, 255, 255, 0.16);
+  --vy-stay-roof: #7fa6ae;
+  --vy-stay-wall: #ffffff;
+  --vy-stay-deck: #dcd3c4;
+  --vy-stay-post: #b9ae9c;
+  --vy-stay-ink: #7d8f92;
+  --vy-stay-glass: #cbe8ec;
+  --vy-stay-door: #6f8f95;
+  --vy-stay-lamp: #f0a94f;
+  --vy-stay-reflect: rgba(255, 255, 255, 0.2);
+  --vy-stay-glint: rgba(255, 236, 196, 0.6);
+}
+
+:root[data-appearance='dark'] {
+  /* Night on the same coast: deep sea-night, moonlit aqua on pale sand. */
+  --vy-sand: #07202b;
+  --vy-shell: #0a2833;
+  --vy-dusk: #0c303c;
+  --vy-surface: #0c2b36;
+  --vy-surface-2: #113844;
+  --vy-line: #1c4553;
+  --vy-line-soft: #153742;
+
+  --vy-ink: #eaf3f5;
+  --vy-ink-2: #b3c7cd;
+  --vy-ink-3: #8fa6ae;
+
+  --vy-tide: #4fd6dd;
+  --vy-tide-2: #86e8ec;
+  --vy-tide-soft: rgba(79, 214, 221, 0.16);
+  --vy-shallow: #5fcfc6;
+  --vy-sea: #79c6e6;
+  --vy-sunset: #f2937c;
+  --vy-indigo: #9ba9f0;
+  --vy-on-accent: #06202a;
+
+  --vy-focus: #4fd6dd;
+  --vy-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 20px -12px rgba(0, 0, 0, 0.7);
+  --vy-shadow: 0 1px 2px rgba(0, 0, 0, 0.55), 0 30px 60px -30px rgba(0, 0, 0, 0.85);
+
+  --vy-sky-1: #04141d;
+  --vy-sky-2: #072430;
+  --vy-sky-3: #0d3a48;
+  --vy-sky-4: #17505c;
+  --vy-glow-1: rgba(214, 240, 244, 0.4);
+  --vy-glow-2: rgba(140, 200, 210, 0.16);
+  --vy-glow-3: rgba(120, 180, 200, 0);
+  --vy-sun: #e7f4f6;
+  --vy-star: rgba(226, 240, 246, 0.8);
+  --vy-cloud: rgba(120, 160, 176, 0.2);
+  --vy-gull: rgba(190, 220, 230, 0.3);
+  --vy-boat: rgba(200, 228, 236, 0.34);
+  --vy-water-1: #04161f;
+  --vy-water-2: #0a2c3a;
+  --vy-water-3: #10404f;
+  --vy-band-a: rgba(120, 190, 210, 0.08);
+  --vy-band-b: rgba(120, 190, 210, 0.11);
+  --vy-band-c: rgba(130, 200, 218, 0.14);
+  --vy-band-d: rgba(150, 214, 228, 0.17);
+  --vy-crest: rgba(196, 232, 242, 0.24);
+  --vy-crest-near: rgba(210, 240, 248, 0.36);
+  --vy-glint: rgba(226, 244, 248, 0.5);
+  --vy-foam-1: rgba(190, 226, 236, 0.32);
+  --vy-foam-2: rgba(190, 226, 236, 0);
+  --vy-lace: rgba(206, 236, 244, 0.4);
+  --vy-sand-wet: #123039;
+  --vy-sand-dry: #0d2733;
+  --vy-sand-mark: rgba(180, 214, 224, 0.16);
+  --vy-frond: #051820;
+  --vy-frond-opacity: 0.82;
+  --vy-arc: rgba(196, 226, 240, 0.4);
+
+  --vy-scrim-1: rgba(7, 32, 43, 0.93);
+  --vy-scrim-2: rgba(7, 32, 43, 0.62);
+  --vy-scrim-3: rgba(7, 32, 43, 0);
+
+  --vy-stay-sky-1: #0a2431;
+  --vy-stay-sky-2: #1d4453;
+  --vy-stay-sun: #dfeff2;
+  --vy-stay-far: #12303c;
+  --vy-stay-sea-1: #071f29;
+  --vy-stay-sea-2: #10404e;
+  --vy-stay-swell: rgba(160, 210, 224, 0.08);
+  --vy-stay-roof: #23343a;
+  --vy-stay-wall: #1b3a46;
+  --vy-stay-deck: #2a4450;
+  --vy-stay-post: #16303b;
+  --vy-stay-ink: #7fa0ad;
+  --vy-stay-glass: #2f6272;
+  --vy-stay-door: #24444f;
+  --vy-stay-lamp: #f2a463;
+  --vy-stay-reflect: rgba(190, 226, 238, 0.12);
+  --vy-stay-glint: rgba(214, 240, 246, 0.28);
+}
+
+/* The developer half inherits the same palette, so the page reads as one site. */
+:root {
+  --dx-bg: var(--vy-sand);
+  --dx-bg-alt: var(--vy-shell);
+  --dx-surface: var(--vy-surface);
+  --dx-surface-2: var(--vy-surface-2);
+  --dx-line: var(--vy-line);
+  --dx-line-soft: var(--vy-line-soft);
+  --dx-ink: var(--vy-ink);
+  --dx-ink-2: var(--vy-ink-2);
+  --dx-ink-3: var(--vy-ink-3);
+  --dx-accent: var(--vy-tide);
+  --dx-accent-2: var(--vy-sea);
+  --dx-accent-ink: var(--vy-on-accent);
+  --dx-accent-soft: var(--vy-tide-soft);
+  --dx-ring: rgba(177, 72, 40, 0.45);
+  --dx-shadow-sm: var(--vy-shadow-sm);
+  --dx-shadow-lg: var(--vy-shadow);
+  --dx-grid-line: rgba(26, 48, 56, 0.06);
+  --dx-glow-a: rgba(177, 72, 40, 0.15);
+  --dx-glow-b: rgba(14, 92, 107, 0.13);
+  --dx-font: var(--vy-sans);
+}
+
+/*
+ * demo.css declares its own dark values at `:root[data-appearance='dark']`,
+ * which outranks the plain `:root` mapping above. The whole set has to be
+ * repeated at the same specificity here — travel.css loads last, so it wins —
+ * or the page would switch palettes halfway down in dark mode.
+ */
+:root[data-appearance='dark'] {
+  --dx-bg: var(--vy-sand);
+  --dx-bg-alt: var(--vy-shell);
+  --dx-surface: var(--vy-surface);
+  --dx-surface-2: var(--vy-surface-2);
+  --dx-line: var(--vy-line);
+  --dx-line-soft: var(--vy-line-soft);
+  --dx-ink: var(--vy-ink);
+  --dx-ink-2: var(--vy-ink-2);
+  --dx-ink-3: var(--vy-ink-3);
+  --dx-accent: var(--vy-tide);
+  --dx-accent-2: var(--vy-sea);
+  --dx-accent-ink: var(--vy-on-accent);
+  --dx-accent-soft: var(--vy-tide-soft);
+  --dx-ring: rgba(240, 144, 112, 0.5);
+  --dx-shadow-sm: var(--vy-shadow-sm);
+  --dx-shadow-lg: var(--vy-shadow);
+  --dx-grid-line: rgba(160, 205, 218, 0.08);
+  --dx-glow-a: rgba(240, 144, 112, 0.16);
+  --dx-glow-b: rgba(121, 198, 230, 0.14);
+}
+
+/* ========================================================================== */
+/*  Base                                                                      */
+/* ========================================================================== */
+
+body {
+  font-family: var(--vy-sans);
+  background: var(--vy-sand);
+  color: var(--vy-ink);
+}
+
+.vy-sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.vy-muted {
+  color: var(--vy-ink-3);
+  font-weight: 400;
+}
+
+.vy-shell {
+  inline-size: min(var(--vy-shell-max), 100%);
+  margin-inline: auto;
+  padding-inline: var(--vy-gutter);
+}
+
+.vy-section {
+  padding-block: clamp(3.5rem, 8vw, 6.5rem);
+  background: var(--vy-sand);
+}
+
+.vy-section--shell {
+  background: var(--vy-shell);
+}
+
+.vy-section--dusk {
+  background: var(--vy-dusk);
+}
+
+.vy-sectionhead {
+  max-inline-size: 46rem;
+  margin-block-end: clamp(2rem, 4vw, 3rem);
+}
+
+.vy-kicker {
+  margin: 0 0 0.9rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--vy-tide);
+}
+
+.vy-sectiontitle {
+  margin: 0 0 1rem;
+  font-family: var(--vy-serif);
+  font-weight: 500;
+  font-size: clamp(1.9rem, 4.6vw, 3.1rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--vy-ink);
+}
+
+.vy-sectiontitle em {
+  font-style: italic;
+  color: var(--vy-tide);
+}
+
+.vy-lede {
+  margin: 0;
+  max-inline-size: 44rem;
+  font-size: clamp(1rem, 1.5vw, 1.075rem);
+  line-height: 1.7;
+  color: var(--vy-ink-2);
+}
+
+.vy-lede code,
+.vy-propnote code,
+.vy-tokens code,
+.vy-hero__lede code,
+.vy-themebar__note code {
+  font-family: var(--dx-mono);
+  font-size: 0.88em;
+  padding: 0.1em 0.38em;
+  border-radius: 6px;
+  background: var(--vy-tide-soft);
+  color: var(--vy-tide);
+  white-space: nowrap;
+}
+
+.vy-propnote {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 0.75rem;
+  margin: 1.75rem 0 0;
+  padding-block-start: 1.25rem;
+  border-block-start: 1px solid var(--vy-line);
+  font-size: 0.9rem;
+  color: var(--vy-ink-3);
+}
+
+.vy-propnote__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--vy-ink-3);
+}
+
+.vy-propnote__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.vy-propnote__aside {
+  flex-basis: 100%;
+  color: var(--vy-ink-2);
+  line-height: 1.6;
+}
+
+/* ========================================================================== */
+/*  Shared controls                                                           */
+/* ========================================================================== */
+
+.vy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.3rem;
+  border: 1px solid var(--vy-line);
+  border-radius: 999px;
+  background: var(--vy-surface);
+  color: var(--vy-ink);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 160ms var(--vy-ease),
+    border-color 160ms var(--vy-ease),
+    color 160ms var(--vy-ease);
+}
+
+.vy-button:hover:not(:disabled) {
+  border-color: var(--vy-tide);
+  color: var(--vy-tide);
+}
+
+.vy-button--primary {
+  background: var(--vy-tide);
+  border-color: var(--vy-tide);
+  color: var(--vy-on-accent);
+}
+
+.vy-button--primary:hover:not(:disabled) {
+  background: var(--vy-tide-2);
+  border-color: var(--vy-tide-2);
+  color: var(--vy-on-accent);
+}
+
+.vy-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.vy-segmented {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--vy-line);
+  border-radius: 999px;
+  background: var(--vy-surface);
+}
+
+.vy-segmented button {
+  padding: 0.42rem 0.95rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--vy-ink-2);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 150ms var(--vy-ease),
+    color 150ms var(--vy-ease);
+}
+
+.vy-segmented button:hover {
+  color: var(--vy-ink);
+}
+
+.vy-segmented button[aria-pressed='true'] {
+  background: var(--vy-tide);
+  color: var(--vy-on-accent);
+}
+
+.vy-segmented--compact button {
+  padding: 0.34rem 0.7rem;
+  font-size: 0.78rem;
+}
+
+.vy-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.vy-stepper button {
+  inline-size: 2rem;
+  block-size: 2rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--vy-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--vy-ink);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    border-color 150ms var(--vy-ease),
+    color 150ms var(--vy-ease);
+}
+
+.vy-stepper button:hover:not(:disabled) {
+  border-color: var(--vy-tide);
+  color: var(--vy-tide);
+}
+
+.vy-stepper button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.vy-stepper output {
+  min-inline-size: 1.5rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.vy-code {
+  margin: 0;
+  padding: 1.15rem 1.3rem;
+  border-radius: var(--vy-radius);
+  background: var(--dx-code-bg);
+  color: var(--dx-code-ink);
+  font-family: var(--dx-mono);
+  font-size: 0.82rem;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+
+.vy-chiplist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vy-chiplist li {
+  padding: 0.28rem 0.7rem;
+  border: 1px solid var(--vy-line);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  color: var(--vy-ink-2);
+}
+
+/* One focus treatment for everything this page owns. */
+.vy-topbar a:focus-visible,
+.vy-topbar button:focus-visible,
+.vy-hero a:focus-visible,
+.vy-hero button:focus-visible,
+.vy-hero select:focus-visible,
+.vy-section a:focus-visible,
+.vy-section button:focus-visible,
+.vy-section select:focus-visible,
+.vy-section input:focus-visible,
+.vy-code:focus-visible {
+  outline: 2px solid var(--vy-focus);
+  outline-offset: 2px;
+}
+
+/* ========================================================================== */
+/*  Reveals                                                                   */
+/* ========================================================================== */
+
+.vy-reveal {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .vy-reveal {
+    opacity: 0;
+    transform: translateY(12px);
+    transition:
+      opacity 640ms var(--vy-ease),
+      transform 640ms var(--vy-ease);
+    transition-delay: var(--vy-delay, 0ms);
+  }
+
+  .vy-reveal[data-revealed='true'] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ========================================================================== */
+/*  Topbar                                                                    */
+/* ========================================================================== */
+
+.vy-topbar {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 40;
+  background: color-mix(in srgb, var(--vy-sand) 82%, transparent);
+  backdrop-filter: saturate(150%) blur(14px);
+  -webkit-backdrop-filter: saturate(150%) blur(14px);
+  border-block-end: 1px solid transparent;
+  transition:
+    border-color 220ms var(--vy-ease),
+    background 220ms var(--vy-ease);
+}
+
+.vy-topbar[data-lifted='true'] {
+  border-block-end-color: var(--vy-line);
+  background: color-mix(in srgb, var(--vy-sand) 92%, transparent);
+}
+
+.vy-topbar__inner {
+  inline-size: min(var(--vy-shell-max), 100%);
+  margin-inline: auto;
+  padding: 0.7rem var(--vy-gutter);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.vy-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  color: inherit;
+  flex: none;
+}
+
+.vy-brand__mark {
+  display: grid;
+  place-items: center;
+  color: var(--vy-tide);
+}
+
+.vy-mark__disc {
+  fill: var(--vy-tide-soft);
+  stroke: var(--vy-tide);
+  stroke-width: 1.4;
+}
+
+.vy-mark__sun {
+  fill: var(--vy-tide);
+}
+
+.vy-mark__line {
+  stroke: var(--vy-tide);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.vy-mark__line--soft {
+  opacity: 0.45;
+}
+
+.vy-brand__text {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  line-height: 1.15;
+}
+
+.vy-brand__name {
+  font-family: var(--vy-serif);
+  font-size: 1.12rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.vy-brand__sub {
+  font-size: 0.67rem;
+  letter-spacing: 0.05em;
+  color: var(--vy-ink-3);
+}
+
+.vy-topbar__nav {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-inline: auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.vy-topbar__nav::-webkit-scrollbar {
+  display: none;
+}
+
+.vy-topbar__nav a {
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--vy-ink-2);
+  white-space: nowrap;
+  transition:
+    background 150ms var(--vy-ease),
+    color 150ms var(--vy-ease);
+}
+
+.vy-topbar__nav a:hover {
+  color: var(--vy-ink);
+  background: var(--vy-tide-soft);
+}
+
+.vy-topbar__nav a[aria-current='true'] {
+  color: var(--vy-tide);
+  background: var(--vy-tide-soft);
+  font-weight: 600;
+}
+
+.vy-topbar__tools {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: none;
+}
+
+.vy-topbar__built {
+  padding: 0.42rem 0.85rem;
+  border: 1px solid var(--vy-line);
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 0.78rem;
+  color: var(--vy-ink-2);
+  white-space: nowrap;
+  transition:
+    border-color 150ms var(--vy-ease),
+    color 150ms var(--vy-ease);
+}
+
+.vy-topbar__built strong {
+  font-weight: 600;
+  color: var(--vy-ink);
+}
+
+.vy-topbar__built:hover,
+.vy-topbar__built[aria-current='true'] {
+  border-color: var(--vy-tide);
+  color: var(--vy-tide);
+}
+
+.vy-topbar__repo,
+.vy-topbar__toggle {
+  inline-size: 2.15rem;
+  block-size: 2.15rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--vy-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--vy-ink-2);
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition:
+    border-color 150ms var(--vy-ease),
+    color 150ms var(--vy-ease);
+}
+
+.vy-topbar__repo:hover,
+.vy-topbar__toggle:hover {
+  border-color: var(--vy-tide);
+  color: var(--vy-tide);
+}
+
+/* ========================================================================== */
+/*  Hero                                                                      */
+/* ========================================================================== */
+
+.vy-hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-block-size: min(94vh, 900px);
+  padding-block: clamp(3rem, 9vw, 6rem) clamp(4rem, 10vw, 7rem);
+  overflow: hidden;
+}
+
+.vy-hero__scene {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+}
+
+.vy-scene {
+  inline-size: 100%;
+  block-size: 100%;
+  display: block;
+}
+
+.vy-hero__scene::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      104deg,
+      var(--vy-scrim-1) 0%,
+      var(--vy-scrim-1) 24%,
+      var(--vy-scrim-2) 54%,
+      var(--vy-scrim-3) 82%
+    ),
+    linear-gradient(to bottom, var(--vy-scrim-3) 84%, var(--vy-sand) 100%);
+}
+
+.vy-hero__inner {
+  position: relative;
+  inline-size: min(var(--vy-shell-max), 100%);
+  margin-inline: auto;
+  padding-inline: var(--vy-gutter);
+}
+
+.vy-hero__eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 1.4rem;
+  font-size: 0.82rem;
+  color: var(--vy-ink-2);
+}
+
+.vy-hero__badge {
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  background: var(--vy-tide);
+  color: var(--vy-on-accent);
+  font-family: var(--vy-serif);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.vy-hero__title {
+  margin: 0 0 1.2rem;
+  max-inline-size: 18ch;
+  font-family: var(--vy-serif);
+  font-weight: 500;
+  font-size: clamp(2.6rem, 7.4vw, 5.1rem);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  color: var(--vy-ink);
+}
+
+.vy-hero__title em {
+  font-style: italic;
+  color: var(--vy-tide);
+}
+
+.vy-hero__lede {
+  margin: 0 0 2rem;
+  max-inline-size: 40rem;
+  font-size: clamp(1rem, 1.6vw, 1.12rem);
+  line-height: 1.72;
+  color: var(--vy-ink-2);
+}
+
+.vy-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) auto auto;
+  align-items: stretch;
+  gap: 0;
+  inline-size: min(62rem, 100%);
+  padding: 0.5rem;
+  border: 1px solid var(--vy-line);
+  border-radius: var(--vy-radius-lg);
+  background: color-mix(in srgb, var(--vy-surface) 92%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--vy-shadow);
+}
+
+.vy-search__field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  gap: 0.2rem;
+  padding: 0.6rem 1rem;
+  border-inline-end: 1px solid var(--vy-line-soft);
+  min-inline-size: 0;
+}
+
+.vy-search__field:last-of-type {
+  border-inline-end: 0;
+}
+
+.vy-search__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--vy-ink-3);
+}
+
+.vy-search__select {
+  appearance: none;
+  inline-size: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--vy-ink);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-overflow: ellipsis;
+}
+
+/*
+ * The grid display here is load-bearing: it blockifies the picker's own
+ * trigger wrapper so the trigger fills the column. The demo never sets a
+ * property on `.dpng` itself.
+ */
+.vy-search__control {
+  display: grid;
+  min-inline-size: 0;
+}
+
+.vy-search__trigger {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.2rem;
+  inline-size: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--vy-ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.vy-search__value {
+  font-size: 1rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vy-search__go {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 1.6rem;
+  margin-inline-start: 0.4rem;
+  border: 0;
+  border-radius: calc(var(--vy-radius-lg) - 6px);
+  background: var(--vy-tide);
+  color: var(--vy-on-accent);
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 160ms var(--vy-ease);
+}
+
+.vy-search__go:hover {
+  background: var(--vy-tide-2);
+}
+
+.vy-hero__result {
+  margin: 1.4rem 0 0;
+  font-size: 0.98rem;
+  color: var(--vy-ink-2);
+}
+
+.vy-hero__result strong {
+  color: var(--vy-ink);
+  font-weight: 600;
+}
+
+.vy-hero__hint {
+  position: absolute;
+  inset-block-end: 1.6rem;
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--vy-line);
+  background: color-mix(in srgb, var(--vy-surface) 80%, transparent);
+  color: var(--vy-ink-2);
+  font-size: 0.78rem;
+  text-decoration: none;
+}
+
+/* ========================================================================== */
+/*  The drawn coast                                                           */
+/* ========================================================================== */
+
+/*
+ * The scene carries no colour attributes at all: every shape takes its fill
+ * from a token, which is what lets one copy of the markup be both a late
+ * afternoon and a moonlit night.
+ */
+
+.vy-stop-sky-1 {
+  stop-color: var(--vy-sky-1);
+}
+.vy-stop-sky-2 {
+  stop-color: var(--vy-sky-2);
+}
+.vy-stop-sky-3 {
+  stop-color: var(--vy-sky-3);
+}
+.vy-stop-sky-4 {
+  stop-color: var(--vy-sky-4);
+}
+.vy-stop-glow-1 {
+  stop-color: var(--vy-glow-1);
+}
+.vy-stop-glow-2 {
+  stop-color: var(--vy-glow-2);
+}
+.vy-stop-glow-3 {
+  stop-color: var(--vy-glow-3);
+}
+.vy-stop-water-1 {
+  stop-color: var(--vy-water-1);
+}
+.vy-stop-water-2 {
+  stop-color: var(--vy-water-2);
+}
+.vy-stop-water-3 {
+  stop-color: var(--vy-water-3);
+}
+.vy-stop-foam-1 {
+  stop-color: var(--vy-foam-1);
+}
+.vy-stop-foam-2 {
+  stop-color: var(--vy-foam-2);
+}
+
+.vy-scene__sun {
+  fill: var(--vy-sun);
+}
+
+.vy-scene__stars circle {
+  fill: var(--vy-star);
+}
+
+.vy-scene__cloud {
+  fill: var(--vy-cloud);
+}
+
+.vy-scene__gull {
+  stroke: var(--vy-gull);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.vy-scene__boat path {
+  fill: var(--vy-boat);
+}
+
+/* Four bands of water. Each is translucent, so where they overlap the colour
+   deepens on its own — no fifth tone to keep in sync. */
+.vy-scene__band--a {
+  fill: var(--vy-band-a);
+}
+.vy-scene__band--b {
+  fill: var(--vy-band-b);
+}
+.vy-scene__band--c {
+  fill: var(--vy-band-c);
+}
+.vy-scene__band--d {
+  fill: var(--vy-band-d);
+}
+
+.vy-scene__crest {
+  stroke: var(--vy-crest);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.vy-scene__crest--near {
+  stroke: var(--vy-crest-near);
+  stroke-width: 2.6;
+}
+
+.vy-scene__glints ellipse {
+  fill: var(--vy-glint);
+}
+
+.vy-scene__lace {
+  stroke: var(--vy-lace);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 2 11 22 8 5 15;
+}
+
+.vy-scene__wet {
+  fill: var(--vy-sand-wet);
+}
+
+.vy-scene__dry {
+  fill: var(--vy-sand-dry);
+}
+
+.vy-scene__marks ellipse {
+  fill: var(--vy-sand-mark);
+}
+
+.vy-scene__arc {
+  stroke: var(--vy-arc);
+  stroke-width: 2;
+  stroke-dasharray: 7 9;
+  stroke-linecap: round;
+}
+
+.vy-scene__plane path {
+  fill: var(--vy-arc);
+}
+
+.vy-scene__pin {
+  fill: var(--vy-arc);
+}
+
+/* Fronds frame the corners; they are never allowed to become the subject. */
+.vy-frond {
+  opacity: var(--vy-frond-opacity);
+}
+
+.vy-frond__rib {
+  stroke: var(--vy-frond);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+
+.vy-frond__leaf {
+  fill: var(--vy-frond);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .vy-scene__layer--sun {
+    transform: translate3d(0, calc(var(--vy-scroll, 0) * 40px), 0);
+  }
+
+  .vy-scene__layer--clouds {
+    transform: translate3d(0, calc(var(--vy-scroll, 0) * 26px), 0);
+  }
+
+  .vy-scene__layer--gulls {
+    transform: translate3d(0, calc(var(--vy-scroll, 0) * 18px), 0);
+  }
+
+  .vy-scene__layer--path {
+    transform: translate3d(0, calc(var(--vy-scroll, 0) * 34px), 0);
+  }
+
+  /* Nearer water moves further: the swell is what sells the depth. */
+  .vy-scene__layer--band-a {
+    transform: translate3d(0, calc(var(--vy-scroll, 0) * -12px), 0);
+  }
+
+  .vy-scene__layer--band-b {
+    transform: translate3d(0, calc(var(--vy-scroll, 0) * -26px), 0);
+  }
+
+  .vy-scene__layer--band-c {
+    transform: translate3d(0, calc(var(--vy-scroll, 0) * -44px), 0);
+  }
+
+  .vy-scene__layer--band-d {
+    transform: translate3d(0, calc(var(--vy-scroll, 0) * -66px), 0);
+  }
+
+  .vy-scene__layer--shore {
+    transform: translate3d(0, calc(var(--vy-scroll, 0) * -92px), 0);
+  }
+
+  .vy-scene__layer--fronds {
+    transform: translate3d(0, calc(var(--vy-scroll, 0) * 22px), 0);
+  }
+
+  .vy-scene__drift--a {
+    animation: vy-drift 84s linear infinite;
+  }
+
+  .vy-scene__drift--b {
+    animation: vy-drift 118s linear infinite reverse;
+  }
+
+  .vy-scene__arc {
+    animation: vy-dash 26s linear infinite;
+  }
+
+  .vy-scene__glints {
+    animation: vy-breathe 9s ease-in-out infinite;
+  }
+
+  .vy-scene__lace {
+    animation: vy-wash 14s ease-in-out infinite;
+  }
+
+  .vy-hero__hint {
+    animation: vy-nudge 3.2s ease-in-out infinite;
+  }
+}
+
+@keyframes vy-drift {
+  from {
+    transform: translateX(-3%);
+  }
+  to {
+    transform: translateX(3%);
+  }
+}
+
+@keyframes vy-dash {
+  to {
+    stroke-dashoffset: -320;
+  }
+}
+
+@keyframes vy-breathe {
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* The tide, at the speed a tide runs up a beach and drains back. */
+@keyframes vy-wash {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translateY(-7px);
+    opacity: 1;
+  }
+}
+
+@keyframes vy-nudge {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+
+/* ========================================================================== */
+/*  The picker frame                                                          */
+/* ========================================================================== */
+
+.vy-pickerframe {
+  display: flex;
+  justify-content: center;
+  padding: 0.35rem;
+  min-inline-size: 0;
+  overflow-x: auto;
+}
+
+/* ========================================================================== */
+/*  Stay                                                                      */
+/* ========================================================================== */
+
+.vy-stay {
+  display: grid;
+  grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+  align-items: start;
+}
+
+.vy-listing {
+  border: 1px solid var(--vy-line);
+  border-radius: var(--vy-radius-lg);
+  background: var(--vy-surface);
+  box-shadow: var(--vy-shadow-sm);
+  overflow: hidden;
+}
+
+.vy-listing__art {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  background: var(--vy-surface-2);
+}
+
+.vy-stayart {
+  inline-size: 100%;
+  block-size: 100%;
+  display: block;
+}
+
+.vy-listing__tag {
+  position: absolute;
+  inset-block-end: 0.85rem;
+  inset-inline-start: 0.85rem;
+  margin: 0;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--vy-surface) 88%, transparent);
+  color: var(--vy-ink);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.vy-listing__body {
+  padding: 1.4rem 1.5rem 1.6rem;
+}
+
+.vy-listing__name {
+  margin: 0 0 0.3rem;
+  font-family: var(--vy-serif);
+  font-size: 1.42rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.vy-listing__where {
+  margin: 0 0 0.7rem;
+  font-size: 0.88rem;
+  color: var(--vy-ink-3);
+}
+
+.vy-listing__rating {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.9rem;
+  font-size: 0.9rem;
+}
+
+.vy-star {
+  color: var(--vy-tide);
+}
+
+.vy-listing__blurb {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.68;
+  color: var(--vy-ink-2);
+}
+
+.vy-listing__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--vy-ink-3);
+}
+
+.vy-listing__facts li + li {
+  position: relative;
+  padding-inline-start: 1rem;
+}
+
+.vy-listing__facts li + li::before {
+  content: '·';
+  position: absolute;
+  inset-inline-start: 0.3rem;
+}
+
+.vy-stay__booking {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+.vy-quote {
+  padding: 1.3rem 1.4rem 1.4rem;
+  border: 1px solid var(--vy-line);
+  border-radius: var(--vy-radius);
+  background: var(--vy-surface);
+}
+
+.vy-quote__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  font-family: var(--vy-serif);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.vy-quote__head small {
+  font-family: var(--vy-sans);
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--vy-ink-3);
+}
+
+.vy-quote__rows {
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.55rem;
+  font-size: 0.92rem;
+}
+
+.vy-quote__rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--vy-ink-2);
+}
+
+.vy-quote__rows dt,
+.vy-quote__rows dd {
+  margin: 0;
+}
+
+.vy-quote__rows dd {
+  font-variant-numeric: tabular-nums;
+}
+
+.vy-quote__total {
+  margin-block-start: 0.5rem;
+  padding-block-start: 0.7rem;
+  border-block-start: 1px solid var(--vy-line);
+  font-weight: 700;
+  color: var(--vy-ink) !important;
+  font-size: 1.02rem;
+}
+
+.vy-quote__empty {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--vy-ink-3);
+}
+
+.vy-quote .vy-button {
+  inline-size: 100%;
+  margin-block-start: 1.1rem;
+}
+
+.vy-quote__note {
+  margin: 0.7rem 0 0;
+  font-size: 0.8rem;
+  text-align: center;
+  color: var(--vy-ink-3);
+}
+
+/* the drawn overwater bungalow */
+.vy-stop-stay-sky-1 {
+  stop-color: var(--vy-stay-sky-1);
+}
+.vy-stop-stay-sky-2 {
+  stop-color: var(--vy-stay-sky-2);
+}
+.vy-stop-stay-sea-1 {
+  stop-color: var(--vy-stay-sea-1);
+}
+.vy-stop-stay-sea-2 {
+  stop-color: var(--vy-stay-sea-2);
+}
+.vy-stayart__sun {
+  fill: var(--vy-stay-sun);
+}
+.vy-stayart__far {
+  fill: var(--vy-stay-far);
+}
+.vy-stayart__swell {
+  fill: var(--vy-stay-swell);
+}
+.vy-stayart__roof {
+  fill: var(--vy-stay-roof);
+}
+.vy-stayart__thatch path {
+  fill: none;
+  stroke: var(--vy-stay-ink);
+  stroke-width: 1.2;
+  opacity: 0.4;
+}
+.vy-stayart__wall {
+  fill: var(--vy-stay-wall);
+}
+.vy-stayart__deck {
+  fill: var(--vy-stay-deck);
+}
+.vy-stayart__deckedge {
+  fill: var(--vy-stay-post);
+}
+.vy-stayart__posts path,
+.vy-stayart__ladder path {
+  fill: none;
+  stroke: var(--vy-stay-post);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+}
+.vy-stayart__ladder path {
+  stroke-width: 2.4;
+}
+.vy-stayart__rail path {
+  fill: none;
+  stroke: var(--vy-stay-post);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.vy-stayart__door {
+  fill: var(--vy-stay-door);
+}
+.vy-stayart__window {
+  fill: var(--vy-stay-glass);
+}
+.vy-stayart__line {
+  fill: none;
+  stroke: var(--vy-stay-ink);
+  stroke-width: 1.2;
+  opacity: 0.55;
+}
+.vy-stayart__lamp {
+  fill: var(--vy-stay-lamp);
+}
+.vy-stayart__reflect ellipse {
+  fill: var(--vy-stay-reflect);
+}
+.vy-stayart__glints ellipse {
+  fill: var(--vy-stay-glint);
+}
+
+/* ========================================================================== */
+/*  Fly                                                                       */
+/* ========================================================================== */
+
+.vy-fly {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.6rem;
+}
+
+.vy-route {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1.5rem;
+}
+
+.vy-route__ends {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.vy-route__code {
+  font-family: var(--vy-serif);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.vy-route__line {
+  position: relative;
+  inline-size: clamp(3.5rem, 12vw, 8rem);
+  block-size: 1px;
+  background: linear-gradient(to right, var(--vy-line), var(--vy-sea), var(--vy-line));
+}
+
+.vy-route__plane {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: var(--vy-shell);
+  color: var(--vy-sea);
+}
+
+.vy-route__detail {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--vy-ink-3);
+}
+
+.vy-fly__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 19rem);
+  gap: clamp(1.25rem, 3vw, 2.25rem);
+  align-items: start;
+}
+
+.vy-fare {
+  padding: 1.3rem 1.4rem;
+  border: 1px solid var(--vy-line);
+  border-radius: var(--vy-radius);
+  background: var(--vy-surface);
+}
+
+.vy-fare__label {
+  margin: 0 0 0.2rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--vy-ink-3);
+}
+
+.vy-fare__total {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  font-family: var(--vy-serif);
+  font-size: 2.3rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--vy-sea);
+}
+
+.vy-fare__total span {
+  font-family: var(--vy-sans);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--vy-ink-3);
+}
+
+.vy-fare__legs {
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.vy-fare__legs li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--vy-ink-2);
+}
+
+.vy-fare__legs strong {
+  font-variant-numeric: tabular-nums;
+  color: var(--vy-ink);
+}
+
+.vy-fare__hint,
+.vy-fare__empty {
+  margin: 0;
+  padding-block-start: 0.9rem;
+  border-block-start: 1px solid var(--vy-line-soft);
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--vy-ink-3);
+}
+
+.vy-fare__hint strong {
+  color: var(--vy-shallow);
+}
+
+.vy-flex__head {
+  margin: 0 0 0.7rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--vy-ink-3);
+}
+
+.vy-flex__strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(8.2rem, 1fr);
+  gap: 0.6rem;
+  overflow-x: auto;
+  padding-block-end: 0.35rem;
+}
+
+.vy-flex__cell {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.75rem 0.8rem;
+  border: 1px solid var(--vy-line);
+  border-radius: var(--vy-radius);
+  background: var(--vy-surface);
+  color: var(--vy-ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color 150ms var(--vy-ease),
+    background 150ms var(--vy-ease),
+    transform 150ms var(--vy-ease);
+}
+
+.vy-flex__cell:hover:not(:disabled) {
+  border-color: var(--vy-sea);
+}
+
+.vy-flex__cell[aria-pressed='true'] {
+  border-color: var(--vy-sea);
+  background: color-mix(in srgb, var(--vy-sea) 10%, var(--vy-surface));
+}
+
+.vy-flex__cell[data-best='true'] {
+  border-color: var(--vy-shallow);
+}
+
+.vy-flex__cell:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.vy-flex__shift {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--vy-ink-3);
+}
+
+.vy-flex__dates {
+  font-size: 0.82rem;
+  color: var(--vy-ink-2);
+  white-space: nowrap;
+}
+
+.vy-flex__price {
+  font-family: var(--vy-serif);
+  font-size: 1.12rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.vy-flex__delta {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--vy-tide);
+}
+
+.vy-flex__delta[data-down='true'] {
+  color: var(--vy-shallow);
+}
+
+.vy-flex__delta--flat {
+  color: var(--vy-ink-3);
+  font-weight: 500;
+}
+
+.vy-flex__empty {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--vy-ink-3);
+}
+
+/* ========================================================================== */
+/*  Do                                                                        */
+/* ========================================================================== */
+
+.vy-do {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+  align-items: start;
+}
+
+.vy-do__list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+.vy-expcard {
+  display: grid;
+  grid-template-columns: 3.2rem minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: start;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--vy-line);
+  border-radius: var(--vy-radius);
+  background: var(--vy-surface);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color 160ms var(--vy-ease),
+    background 160ms var(--vy-ease);
+}
+
+.vy-expcard:hover {
+  border-color: var(--vy-shallow);
+}
+
+.vy-expcard[aria-checked='true'] {
+  border-color: var(--vy-shallow);
+  background: color-mix(in srgb, var(--vy-shallow) 8%, var(--vy-surface));
+}
+
+.vy-expart {
+  inline-size: 3.2rem;
+  block-size: 3.2rem;
+}
+
+.vy-expart__disc {
+  fill: color-mix(in srgb, var(--vy-shallow) 12%, transparent);
+}
+
+.vy-expart__ink {
+  fill: none;
+  stroke: var(--vy-shallow);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.vy-expcard__body {
+  display: grid;
+  gap: 0.25rem;
+  min-inline-size: 0;
+}
+
+.vy-expcard__title {
+  font-family: var(--vy-serif);
+  font-size: 1.08rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.vy-expcard__meta {
+  font-size: 0.78rem;
+  color: var(--vy-ink-3);
+}
+
+.vy-expcard__blurb {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--vy-ink-2);
+}
+
+.vy-do__booking {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.1rem;
+}
+
+.vy-slots {
+  padding: 1.2rem 1.3rem 1.3rem;
+  border: 1px solid var(--vy-line);
+  border-radius: var(--vy-radius);
+  background: var(--vy-surface);
+}
+
+.vy-slots__head {
+  margin: 0 0 0.85rem;
+  font-family: var(--vy-serif);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.vy-slots__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.vy-slot {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.55rem 0.95rem;
+  border: 1px solid var(--vy-line);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--vy-ink);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 150ms var(--vy-ease),
+    background 150ms var(--vy-ease);
+}
+
+.vy-slot:hover:not(:disabled) {
+  border-color: var(--vy-shallow);
+}
+
+.vy-slot[aria-pressed='true'] {
+  border-color: var(--vy-shallow);
+  background: var(--vy-shallow);
+  color: var(--vy-on-accent);
+}
+
+.vy-slot[aria-pressed='true'] .vy-slot__seats {
+  color: color-mix(in srgb, var(--vy-on-accent) 82%, transparent);
+}
+
+.vy-slot:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.vy-slot__time {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.vy-slot__seats {
+  font-size: 0.72rem;
+  color: var(--vy-ink-3);
+}
+
+.vy-slots__summary {
+  margin: 1rem 0 0;
+  padding-block-start: 0.9rem;
+  border-block-start: 1px solid var(--vy-line-soft);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--vy-ink-2);
+}
+
+/* ========================================================================== */
+/*  Together                                                                  */
+/* ========================================================================== */
+
+.vy-together {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
+  gap: clamp(1.25rem, 3vw, 2.25rem);
+  align-items: start;
+}
+
+.vy-poll {
+  padding: 1.3rem 1.4rem 1.4rem;
+  border: 1px solid var(--vy-line);
+  border-radius: var(--vy-radius);
+  background: var(--vy-surface);
+}
+
+.vy-poll__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin: 0 0 0.9rem;
+  font-family: var(--vy-serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.vy-poll__count {
+  font-family: var(--vy-sans);
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--vy-ink-3);
+}
+
+.vy-poll__chips {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.45rem;
+  margin: 0 0 1.1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.vy-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.45rem 0.45rem 0.8rem;
+  border: 1px solid var(--vy-line);
+  border-radius: 999px;
+  font-size: 0.86rem;
+}
+
+.vy-chip[data-strong='true'] {
+  border-color: var(--vy-sunset);
+  background: color-mix(in srgb, var(--vy-sunset) 9%, transparent);
+}
+
+.vy-chip__date {
+  font-weight: 600;
+}
+
+.vy-chip__score {
+  margin-inline-start: auto;
+  font-size: 0.78rem;
+  color: var(--vy-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.vy-chip__remove {
+  inline-size: 1.6rem;
+  block-size: 1.6rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--vy-ink-3);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 150ms var(--vy-ease),
+    color 150ms var(--vy-ease);
+}
+
+.vy-chip__remove:hover {
+  background: var(--vy-tide-soft);
+  color: var(--vy-tide);
+}
+
+.vy-poll__empty {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: var(--vy-ink-3);
+}
+
+.vy-poll__winner {
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--vy-line-soft);
+}
+
+.vy-poll__winnerhead {
+  margin: 0 0 0.8rem;
+  font-size: 0.86rem;
+  color: var(--vy-ink-3);
+}
+
+.vy-poll__winnerhead strong {
+  color: var(--vy-ink);
+}
+
+.vy-crew {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vy-crew__member {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-inline-size: 0;
+}
+
+.vy-crew__avatar {
+  inline-size: 2rem;
+  block-size: 2rem;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--vy-surface-2);
+  color: var(--vy-ink-3);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.vy-crew__member[data-free='true'] .vy-crew__avatar {
+  background: var(--vy-sunset);
+  color: var(--vy-on-accent);
+}
+
+.vy-crew__name {
+  display: grid;
+  font-size: 0.85rem;
+  line-height: 1.25;
+  min-inline-size: 0;
+}
+
+.vy-crew__name small {
+  font-size: 0.7rem;
+  color: var(--vy-ink-3);
+}
+
+.vy-crew__member[data-free='true'] .vy-crew__name small {
+  color: var(--vy-sunset);
+}
+
+/* ========================================================================== */
+/*  When to go                                                                */
+/* ========================================================================== */
+
+.vy-season {
+  display: grid;
+  /* The picker side gets the wider track: two months side by side need about
+     545px before the month grid wraps, and a wrapped calendar reads as a bug. */
+  grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.94fr);
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+  align-items: start;
+}
+
+.vy-season__picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+/* The frame stretches to the track; only the unit toggle shrinks to fit. */
+.vy-season__picker > .vy-segmented {
+  justify-self: start;
+}
+
+.vy-season__chart {
+  padding: 1.4rem 1.5rem 1.5rem;
+  border: 1px solid var(--vy-line);
+  border-radius: var(--vy-radius-lg);
+  background: var(--vy-surface);
+  box-shadow: var(--vy-shadow-sm);
+}
+
+.vy-chart__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.9rem;
+  margin-block-end: 1.4rem;
+}
+
+.vy-chart__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.15rem;
+  font-family: var(--vy-serif);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.vy-chart__glyph {
+  color: var(--vy-indigo);
+  display: grid;
+  place-items: center;
+}
+
+.vy-chart__sub {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--vy-ink-3);
+}
+
+.vy-bars {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.28rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vy-bars__button {
+  inline-size: 100%;
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.3rem 0.1rem;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  transition: background 150ms var(--vy-ease);
+}
+
+.vy-bars__button:hover {
+  background: var(--vy-surface-2);
+}
+
+.vy-bars__track {
+  display: flex;
+  align-items: flex-end;
+  block-size: clamp(90px, 16vw, 150px);
+  border-radius: 7px;
+  background: var(--vy-surface-2);
+  overflow: hidden;
+}
+
+.vy-bars__fill {
+  inline-size: 100%;
+  border-radius: 7px 7px 0 0;
+  background: color-mix(in srgb, var(--vy-indigo) 34%, transparent);
+  transition:
+    height 320ms var(--vy-ease),
+    background 160ms var(--vy-ease);
+}
+
+.vy-bars__button[data-verdict='sweet spot'] .vy-bars__fill {
+  background: color-mix(in srgb, var(--vy-shallow) 48%, transparent);
+}
+
+.vy-bars__button[data-verdict='peak'] .vy-bars__fill {
+  background: color-mix(in srgb, var(--vy-tide) 52%, transparent);
+}
+
+.vy-bars__button[aria-pressed='true'] .vy-bars__fill {
+  background: var(--vy-indigo);
+}
+
+.vy-bars__button[aria-pressed='true'][data-verdict='sweet spot'] .vy-bars__fill {
+  background: var(--vy-shallow);
+}
+
+.vy-bars__button[aria-pressed='true'][data-verdict='peak'] .vy-bars__fill {
+  background: var(--vy-tide);
+}
+
+.vy-bars__label {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--vy-ink-3);
+  text-align: center;
+}
+
+.vy-bars__button[aria-pressed='true'] .vy-bars__label {
+  color: var(--vy-ink);
+}
+
+.vy-season__readout {
+  margin-block-start: 1.4rem;
+  padding-block-start: 1.2rem;
+  border-block-start: 1px solid var(--vy-line-soft);
+}
+
+.vy-season__verdict {
+  margin: 0 0 0.9rem;
+  font-family: var(--vy-serif);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--vy-indigo);
+}
+
+/* Sentence case, not title case: `capitalize` would give "Nov Is Shoulder". */
+.vy-season__verdict::first-letter {
+  text-transform: uppercase;
+}
+
+.vy-season__verdict[data-verdict='sweet spot'] {
+  color: var(--vy-shallow);
+}
+
+.vy-season__verdict[data-verdict='peak'] {
+  color: var(--vy-tide);
+}
+
+.vy-season__stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin: 0 0 0.9rem;
+}
+
+.vy-season__stats dt {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--vy-ink-3);
+}
+
+.vy-season__stats dd {
+  margin: 0.15rem 0 0;
+  font-family: var(--vy-serif);
+  font-size: 1.12rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.vy-season__window {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--vy-ink-3);
+}
+
+/* ========================================================================== */
+/*  Make it yours                                                             */
+/* ========================================================================== */
+
+.vy-themebar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.9rem 1.25rem;
+  margin-block-end: 1.75rem;
+}
+
+.vy-themebar__note {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--vy-ink-3);
+}
+
+.vy-themegrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16.5rem, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.vy-themecard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.9rem;
+  padding: 1.05rem 1.1rem 1.2rem;
+  border: 1px solid var(--vy-line);
+  border-radius: var(--vy-radius);
+  background: var(--vy-surface);
+  transition:
+    border-color 160ms var(--vy-ease),
+    box-shadow 160ms var(--vy-ease);
+}
+
+.vy-themecard[data-active='true'] {
+  border-color: var(--vy-tide);
+  box-shadow: 0 0 0 1px var(--vy-tide);
+}
+
+.vy-themecard__head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.15rem 0.55rem;
+}
+
+.vy-themecard__head input {
+  inline-size: 1.05rem;
+  block-size: 1.05rem;
+  accent-color: var(--vy-tide);
+  cursor: pointer;
+}
+
+.vy-themecard__head label {
+  font-family: var(--vy-serif);
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.vy-themecard__head p {
+  grid-column: 2;
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--vy-ink-3);
+}
+
+.vy-themecard__stage {
+  display: flex;
+  justify-content: center;
+  padding: 0.2rem;
+  overflow-x: auto;
+}
+
+.vy-tokens {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(1.25rem, 3vw, 2.25rem);
+  align-items: center;
+  margin-block-start: 2.25rem;
+  padding-block-start: 2rem;
+  border-block-start: 1px solid var(--vy-line);
+}
+
+.vy-tokens__copy h3 {
+  margin: 0 0 0.7rem;
+  font-family: var(--vy-serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.vy-tokens__copy p {
+  margin: 0 0 0.8rem;
+  font-size: 0.96rem;
+  line-height: 1.7;
+  color: var(--vy-ink-2);
+}
+
+.vy-tokens__rule {
+  padding-inline-start: 0.9rem;
+  border-inline-start: 2px solid var(--vy-tide);
+  color: var(--vy-ink) !important;
+}
+
+/* ========================================================================== */
+/*  Built with datepicker-nextgen                                             */
+/* ========================================================================== */
+
+.vy-built {
+  border-block-start: 1px solid var(--vy-line);
+  background: var(--vy-shell);
+}
+
+.vy-built__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: center;
+  margin-block-end: clamp(2.5rem, 5vw, 3.75rem);
+}
+
+.vy-built__copy h2 {
+  margin: 0 0 1rem;
+  font-family: var(--vy-serif);
+  font-weight: 500;
+  font-size: clamp(1.9rem, 4.4vw, 3rem);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+}
+
+.vy-built__copy h2 em {
+  font-style: italic;
+  color: var(--vy-tide);
+}
+
+.vy-built__lede {
+  margin: 0 0 1.75rem;
+  max-inline-size: 34rem;
+  font-size: 1.03rem;
+  line-height: 1.7;
+  color: var(--vy-ink-2);
+}
+
+.vy-built__stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.9rem;
+  justify-items: center;
+}
+
+/* ========================================================================== */
+/*  Picker token scopes — the ONLY way this page touches the picker           */
+/* ========================================================================== */
+
+/*
+ * Two classes deep on purpose. `.dpng[data-theme='dark']` is a (0,2,0)
+ * selector inside the library's stylesheet, so a single class here would lose
+ * to it in dark mode and the section accent would silently vanish.
+ */
+
+.vy-scope {
+  --dpng-font: var(--vy-sans);
+}
+
+.vy-scope.vy-scope--tide,
+.vy-scope.vy-scope--sea,
+.vy-scope.vy-scope--shallow,
+.vy-scope.vy-scope--sunset,
+.vy-scope.vy-scope--indigo {
+  --dpng-font: var(--vy-sans);
+  --dpng-radius-card: 20px;
+  --dpng-accent-contrast: #ffffff;
+  --dpng-surface: var(--vy-surface);
+  --dpng-surface-elevated: var(--vy-surface);
+  --dpng-text: #14232b;
+  --dpng-day-text: #2e3e47;
+  --dpng-text-muted: #5c6a73;
+  --dpng-text-subtle: #78868f;
+  --dpng-border: #e7f0f2;
+  --dpng-border-strong: #d5e4e8;
+  --dpng-hover-bg: #eef6f7;
+  --dpng-disabled-text: #b3c3c8;
+  --dpng-blocked-color: #a5b6bb;
+  --dpng-weekday-color: #8e9ba2;
+  --dpng-preview-bg: #f0f8f9;
+  --dpng-card-border: rgba(26, 48, 56, 0.08);
+  --dpng-shadow: 0 1px 2px rgba(26, 48, 56, 0.05), 0 18px 40px -20px rgba(26, 48, 56, 0.3);
+}
+
+.vy-scope.vy-scope--tide {
+  --dpng-accent: #077e8b;
+  --dpng-accent-hover: #086b76;
+  --dpng-accent-soft: #e2f6f8;
+  --dpng-range-bg: #d9f2f5;
+  --dpng-range-text: #055f6a;
+  --dpng-ring: #077e8b;
+  --dpng-today-color: #077e8b;
+  --dpng-badge-bg: #d9f2f5;
+  --dpng-badge-text: #086b76;
+  --dpng-holiday-color: #c2452f;
+}
+
+.vy-scope.vy-scope--shallow {
+  /* The experiences calendar tints its weekends, because the weekend boats
+     fill first. `--dpng-weekend-color` is a documented token — the stylesheet
+     ships it defaulting to the ordinary day colour. */
+  --dpng-weekend-color: #0f8d97;
+  --dpng-accent: #0f8d97;
+  --dpng-accent-hover: #0b7481;
+  --dpng-accent-soft: #e0f7f8;
+  --dpng-range-bg: #d2f2f4;
+  --dpng-range-text: #0b6874;
+  --dpng-ring: #0f8d97;
+  --dpng-today-color: #0f8d97;
+  --dpng-badge-bg: #d2f2f4;
+  --dpng-badge-text: #0b6874;
+}
+
+.vy-scope.vy-scope--sea {
+  --dpng-accent: #0e5c6b;
+  --dpng-accent-hover: #0a4854;
+  --dpng-accent-soft: #e5f1f4;
+  --dpng-range-bg: #ddecf0;
+  --dpng-range-text: #0a4854;
+  --dpng-ring: #0e5c6b;
+  --dpng-today-color: #0e5c6b;
+  --dpng-badge-bg: #ddecf0;
+  --dpng-badge-text: #0a4854;
+}
+
+.vy-scope.vy-scope--sunset {
+  --dpng-accent: #a8446a;
+  --dpng-accent-hover: #8c3557;
+  --dpng-accent-soft: #f8eaf0;
+  --dpng-range-bg: #f4e2ea;
+  --dpng-range-text: #8c3557;
+  --dpng-ring: #a8446a;
+  --dpng-today-color: #a8446a;
+  --dpng-badge-bg: #f4e2ea;
+  --dpng-badge-text: #8c3557;
+}
+
+.vy-scope.vy-scope--indigo {
+  --dpng-accent: #3e4a8a;
+  --dpng-accent-hover: #313b71;
+  --dpng-accent-soft: #eaecf7;
+  --dpng-range-bg: #e3e6f4;
+  --dpng-range-text: #313b71;
+  --dpng-ring: #3e4a8a;
+  --dpng-today-color: #3e4a8a;
+  --dpng-badge-bg: #e3e6f4;
+  --dpng-badge-text: #313b71;
+}
+
+/* Night versions. The extra `:root` step keeps these above the library's own
+   `[data-theme='dark']` block, which is where the base dark tokens come from. */
+:root[data-appearance='dark'] .vy-scope.vy-scope--tide,
+:root[data-appearance='dark'] .vy-scope.vy-scope--sea,
+:root[data-appearance='dark'] .vy-scope.vy-scope--shallow,
+:root[data-appearance='dark'] .vy-scope.vy-scope--sunset,
+:root[data-appearance='dark'] .vy-scope.vy-scope--indigo {
+  --dpng-accent-contrast: #06202a;
+  --dpng-surface: #0c2b36;
+  --dpng-surface-elevated: #113844;
+  --dpng-text: #eaf3f5;
+  --dpng-day-text: #cbdde2;
+  --dpng-text-muted: #a2b7be;
+  --dpng-text-subtle: #8296a0;
+  --dpng-border: #17404e;
+  --dpng-border-strong: #255260;
+  --dpng-hover-bg: #123644;
+  --dpng-disabled-text: #556e78;
+  --dpng-blocked-color: #6b848e;
+  --dpng-weekday-color: #7c959f;
+  --dpng-preview-bg: rgba(120, 190, 205, 0.11);
+  --dpng-card-border: rgba(150, 200, 215, 0.14);
+  --dpng-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 22px 44px -22px rgba(0, 0, 0, 0.8);
+}
+
+:root[data-appearance='dark'] .vy-scope.vy-scope--tide {
+  --dpng-accent: #f09070;
+  --dpng-accent-hover: #f6ab90;
+  --dpng-accent-soft: rgba(240, 144, 112, 0.16);
+  --dpng-range-bg: rgba(240, 144, 112, 0.18);
+  --dpng-range-text: #f7c1ab;
+  --dpng-ring: #f09070;
+  --dpng-today-color: #f09070;
+  --dpng-badge-bg: rgba(240, 144, 112, 0.18);
+  --dpng-badge-text: #f6ab90;
+  --dpng-holiday-color: #e89bb4;
+}
+
+:root[data-appearance='dark'] .vy-scope.vy-scope--shallow {
+  --dpng-weekend-color: #5fcfc6;
+  --dpng-accent: #5fcfc6;
+  --dpng-accent-hover: #85dcd5;
+  --dpng-accent-soft: rgba(95, 207, 198, 0.16);
+  --dpng-range-bg: rgba(95, 207, 198, 0.18);
+  --dpng-range-text: #a9e6e0;
+  --dpng-ring: #5fcfc6;
+  --dpng-today-color: #5fcfc6;
+  --dpng-badge-bg: rgba(95, 207, 198, 0.18);
+  --dpng-badge-text: #85dcd5;
+}
+
+:root[data-appearance='dark'] .vy-scope.vy-scope--sea {
+  --dpng-accent: #79c6e6;
+  --dpng-accent-hover: #9bd6ef;
+  --dpng-accent-soft: rgba(121, 198, 230, 0.16);
+  --dpng-range-bg: rgba(121, 198, 230, 0.18);
+  --dpng-range-text: #b6e1f4;
+  --dpng-ring: #79c6e6;
+  --dpng-today-color: #79c6e6;
+  --dpng-badge-bg: rgba(121, 198, 230, 0.18);
+  --dpng-badge-text: #9bd6ef;
+}
+
+:root[data-appearance='dark'] .vy-scope.vy-scope--sunset {
+  --dpng-accent: #e89bb4;
+  --dpng-accent-hover: #f0b6c9;
+  --dpng-accent-soft: rgba(232, 155, 180, 0.16);
+  --dpng-range-bg: rgba(232, 155, 180, 0.18);
+  --dpng-range-text: #f4cdd9;
+  --dpng-ring: #e89bb4;
+  --dpng-today-color: #e89bb4;
+  --dpng-badge-bg: rgba(232, 155, 180, 0.18);
+  --dpng-badge-text: #f0b6c9;
+}
+
+:root[data-appearance='dark'] .vy-scope.vy-scope--indigo {
+  --dpng-accent: #9ba9f0;
+  --dpng-accent-hover: #b6c0f5;
+  --dpng-accent-soft: rgba(155, 169, 240, 0.16);
+  --dpng-range-bg: rgba(155, 169, 240, 0.18);
+  --dpng-range-text: #cdd4f8;
+  --dpng-ring: #9ba9f0;
+  --dpng-today-color: #9ba9f0;
+  --dpng-badge-bg: rgba(155, 169, 240, 0.18);
+  --dpng-badge-text: #b6c0f5;
+}
+
+/* ========================================================================== */
+/*  Responsive                                                                */
+/* ========================================================================== */
+
+/*
+ * 1120px, not 1080: below this the two-column sections cannot give a
+ * two-month calendar the ~545px it needs before the month grid wraps into a
+ * stack. The components switch to `numberOfMonths={1}` at the same width.
+ */
+@media (max-width: 1120px) {
+  .vy-stay,
+  .vy-do,
+  .vy-together,
+  .vy-season,
+  .vy-fly__grid,
+  .vy-tokens,
+  .vy-built__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .vy-topbar__nav {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  /*
+   * A phone crops the scene to a column, and every line of hero copy needs a
+   * scrim behind it. Rather than wash the whole coast out, the hero grows a
+   * deeper foot and the scrim clears over it — so the drawn foam edge and wet
+   * sand are what hand the page over to the real sand background.
+   */
+  .vy-hero {
+    padding-block-end: clamp(7rem, 26vw, 10rem);
+  }
+
+  .vy-hero__scene::after {
+    background: linear-gradient(
+      to bottom,
+      var(--vy-scrim-1) 0%,
+      var(--vy-scrim-1) 66%,
+      var(--vy-scrim-2) 82%,
+      var(--vy-scrim-3) 93%,
+      var(--vy-sand) 100%
+    );
+  }
+
+  .vy-search {
+    grid-template-columns: minmax(0, 1fr);
+    border-radius: var(--vy-radius);
+  }
+
+  .vy-search__field {
+    border-inline-end: 0;
+    border-block-end: 1px solid var(--vy-line-soft);
+  }
+
+  .vy-search__go {
+    margin-inline-start: 0;
+    margin-block-start: 0.5rem;
+    padding-block: 0.85rem;
+    border-radius: calc(var(--vy-radius) - 4px);
+  }
+
+  .vy-bars {
+    gap: 0.18rem;
+  }
+
+  .vy-season__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .vy-hero {
+    min-block-size: auto;
+  }
+
+  .vy-hero__hint {
+    display: none;
+  }
+
+  .vy-topbar__built {
+    display: none;
+  }
+
+  .vy-brand__sub {
+    display: none;
+  }
+
+  .vy-crew {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .vy-bars__track {
+    block-size: 84px;
+  }
+
+  .vy-bars__label {
+    font-size: 0.58rem;
+  }
+
+  .vy-flex__strip {
+    grid-auto-columns: 7.6rem;
+  }
+
+  .vy-pickerframe {
+    padding-inline: 0;
+  }
+}
+
+@media (max-width: 400px) {
+  .vy-hero__title {
+    font-size: 2.35rem;
+  }
+
+  .vy-listing__body,
+  .vy-quote,
+  .vy-poll,
+  .vy-slots,
+  .vy-fare {
+    padding-inline: 1rem;
+  }
+}

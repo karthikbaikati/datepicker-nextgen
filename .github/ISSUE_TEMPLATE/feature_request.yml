@@ -1,0 +1,20 @@
+name: Feature request
+description: Suggest a capability the library is missing
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the product scenario, not just the API you have in mind.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed API
+      description: Rough is fine.
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Current workaround

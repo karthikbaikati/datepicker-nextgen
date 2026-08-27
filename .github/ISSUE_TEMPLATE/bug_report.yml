@@ -1,0 +1,36 @@
+name: Bug report
+description: Something does not work the way the docs say it should
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: repro
+    attributes:
+      label: Reproduction
+      description: A StackBlitz/CodeSandbox link, or a minimal snippet.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: datepicker-nextgen version
+    validations:
+      required: true
+  - type: dropdown
+    id: binding
+    attributes:
+      label: Which binding?
+      options: [React component, React headless hook, Vanilla JS, Web component, Core engine]
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Browser / runtime / locale
+      placeholder: Chrome 139, macOS, en-GB

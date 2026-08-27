@@ -1,0 +1,118 @@
+/*!
+ * datepicker-nextgen — "glass" theme
+ *
+ * A frosted, translucent card for use over photography, gradients or video.
+ *
+ * The blur is delivered through `--dpng-card-filter`, a hook that styles.css
+ * applies to the card and the sheet — this file stays token-only. The block
+ * below the `@supports` guard is the opaque fallback: browsers without
+ * `backdrop-filter` get a solid, fully legible surface instead of washed-out
+ * text over an unblurred background.
+ *
+ *   <div class="dpng" data-theme="glass">
+ *
+ * Tokens only — every component rule lives in styles.css.
+ */
+
+/* --- Fallback: opaque, no blur. Always defined. -------------------------- */
+.dpng[data-theme='glass'] {
+  --dpng-accent: #2563eb;
+  --dpng-accent-hover: #1d4ed8;
+  --dpng-accent-contrast: #ffffff;
+  --dpng-accent-soft: #eaf1ff;
+  --dpng-range-bg: #e8efff;
+  --dpng-range-text: #1e40af;
+  --dpng-surface: #f7f9fc;
+  --dpng-surface-elevated: #ffffff;
+  --dpng-text: #0b1220;
+  --dpng-text-muted: #4a5568;
+  --dpng-text-subtle: #7c879b;
+  --dpng-border: #e4e9f2;
+  --dpng-border-strong: #cdd5e3;
+  --dpng-hover-bg: #eaeef6;
+  --dpng-disabled-text: #b3bccb;
+  --dpng-today-color: #2563eb;
+  --dpng-weekday-color: #7c879b;
+  --dpng-badge-bg: #e8efff;
+  --dpng-badge-text: #1d4ed8;
+  --dpng-blocked-color: #a8b2c2;
+  --dpng-preview-bg: #eef2f8;
+  --dpng-ring: #2563eb;
+  --dpng-shadow: 0 1px 2px rgba(11, 18, 32, 0.06), 0 20px 50px -18px rgba(11, 18, 32, 0.35);
+  --dpng-card-border: rgba(11, 18, 32, 0.1);
+  --dpng-backdrop: rgba(11, 18, 32, 0.4);
+  --dpng-day-text: #263449;
+  --dpng-invalid: #dc2626;
+  --dpng-holiday-color: #b45309;
+  --dpng-card-filter: none;
+  --dpng-radius-card: 22px;
+
+  color-scheme: light;
+}
+
+/* --- Enhanced: translucent surface + blur, where supported. -------------- */
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .dpng[data-theme='glass'] {
+    --dpng-surface: rgba(255, 255, 255, 0.62);
+    --dpng-surface-elevated: rgba(255, 255, 255, 0.78);
+    --dpng-border: rgba(255, 255, 255, 0.5);
+    --dpng-border-strong: rgba(255, 255, 255, 0.72);
+    --dpng-hover-bg: rgba(255, 255, 255, 0.55);
+    --dpng-range-bg: rgba(37, 99, 235, 0.14);
+    --dpng-accent-soft: rgba(37, 99, 235, 0.12);
+    --dpng-badge-bg: rgba(255, 255, 255, 0.6);
+    --dpng-preview-bg: rgba(255, 255, 255, 0.4);
+    --dpng-card-border: rgba(255, 255, 255, 0.55);
+    --dpng-card-filter: blur(20px) saturate(180%);
+    --dpng-shadow: 0 1px 2px rgba(11, 18, 32, 0.08), 0 24px 60px -20px rgba(11, 18, 32, 0.45);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .dpng[data-theme='glass'] {
+    --dpng-accent: #7aa8ff;
+    --dpng-accent-hover: #a4c3ff;
+    --dpng-accent-contrast: #08101f;
+    --dpng-accent-soft: rgba(122, 168, 255, 0.2);
+    --dpng-range-bg: rgba(122, 168, 255, 0.22);
+    --dpng-range-text: #dbe7ff;
+    --dpng-surface: #131a27;
+    --dpng-surface-elevated: #1c2432;
+    --dpng-text: #f2f5fa;
+    --dpng-text-muted: #a9b4c6;
+    --dpng-text-subtle: #7e8b9e;
+    --dpng-border: #232c3c;
+    --dpng-border-strong: #384356;
+    --dpng-hover-bg: #1d2634;
+    --dpng-disabled-text: #55627a;
+    --dpng-today-color: #7aa8ff;
+    --dpng-weekday-color: #7e8b9e;
+    --dpng-badge-bg: rgba(122, 168, 255, 0.2);
+    --dpng-badge-text: #cfe0ff;
+    --dpng-blocked-color: #7e8b9e;
+    --dpng-preview-bg: rgba(226, 234, 247, 0.08);
+    --dpng-ring: #a4c3ff;
+    --dpng-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 24px 60px -20px rgba(0, 0, 0, 0.8);
+    --dpng-card-border: rgba(226, 234, 247, 0.16);
+    --dpng-backdrop: rgba(4, 8, 16, 0.66);
+    --dpng-day-text: #cdd7e6;
+    --dpng-invalid: #fca5a5;
+    --dpng-holiday-color: #fcd34d;
+
+    color-scheme: dark;
+  }
+
+  @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .dpng[data-theme='glass'] {
+      --dpng-surface: rgba(19, 26, 39, 0.6);
+      --dpng-surface-elevated: rgba(28, 36, 50, 0.75);
+      --dpng-border: rgba(226, 234, 247, 0.12);
+      --dpng-border-strong: rgba(226, 234, 247, 0.24);
+      --dpng-hover-bg: rgba(226, 234, 247, 0.12);
+      --dpng-badge-bg: rgba(226, 234, 247, 0.12);
+      --dpng-preview-bg: rgba(226, 234, 247, 0.07);
+      --dpng-card-border: rgba(226, 234, 247, 0.2);
+      --dpng-card-filter: blur(20px) saturate(180%);
+    }
+  }
+}

@@ -1,0 +1,85 @@
+/*!
+ * datepicker-nextgen — "mono" theme
+ *
+ * Pure neutral: black, white and grey, thin hairlines, square-ish corners and
+ * no shadow. Made for dense admin tables and dashboards where the picker
+ * should read as part of the chrome rather than as a coloured widget.
+ *
+ *   <div class="dpng" data-theme="mono">
+ *
+ * Tokens only — every component rule lives in styles.css.
+ */
+
+.dpng[data-theme='mono'] {
+  --dpng-accent: #171717;
+  --dpng-accent-hover: #000000;
+  --dpng-accent-contrast: #ffffff;
+  --dpng-accent-soft: #f4f4f5;
+  --dpng-range-bg: #ededee;
+  --dpng-range-text: #171717;
+  --dpng-surface: #ffffff;
+  --dpng-surface-elevated: #ffffff;
+  --dpng-text: #0a0a0a;
+  --dpng-text-muted: #52525b;
+  --dpng-text-subtle: #71717a;
+  --dpng-border: #e7e7e9;
+  --dpng-border-strong: #d1d1d6;
+  --dpng-hover-bg: #f4f4f5;
+  --dpng-disabled-text: #b4b4bb;
+  --dpng-today-color: #0a0a0a;
+  --dpng-weekday-color: #71717a;
+  --dpng-badge-bg: #f4f4f5;
+  --dpng-badge-text: #171717;
+  --dpng-blocked-color: #9c9ca5;
+  --dpng-preview-bg: #fafafa;
+  --dpng-ring: #0a0a0a;
+  --dpng-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --dpng-card-border: #d1d1d6;
+  --dpng-backdrop: rgba(10, 10, 10, 0.45);
+  --dpng-day-text: #3f3f46;
+  --dpng-invalid: #0a0a0a;
+  --dpng-holiday-color: #52525b;
+
+  /* Minimal geometry: square-ish everywhere, only the day pill stays round. */
+  --dpng-radius: 4px;
+  --dpng-radius-card: 8px;
+  --dpng-cell-radius: 6px;
+  --dpng-gap: 0px;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dpng[data-theme='mono'] {
+    --dpng-accent: #fafafa;
+    --dpng-accent-hover: #ffffff;
+    --dpng-accent-contrast: #0a0a0a;
+    --dpng-accent-soft: #27272a;
+    --dpng-range-bg: #2b2b30;
+    --dpng-range-text: #fafafa;
+    --dpng-surface: #0a0a0a;
+    --dpng-surface-elevated: #18181b;
+    --dpng-text: #fafafa;
+    --dpng-text-muted: #a1a1aa;
+    --dpng-text-subtle: #82828c;
+    --dpng-border: #232326;
+    --dpng-border-strong: #3f3f46;
+    --dpng-hover-bg: #1d1d20;
+    --dpng-disabled-text: #55555d;
+    --dpng-today-color: #fafafa;
+    --dpng-weekday-color: #82828c;
+    --dpng-badge-bg: #27272a;
+    --dpng-badge-text: #fafafa;
+    --dpng-blocked-color: #82828c;
+    --dpng-preview-bg: #161619;
+    --dpng-ring: #fafafa;
+    --dpng-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    --dpng-card-border: #3f3f46;
+    --dpng-backdrop: rgba(0, 0, 0, 0.7);
+    --dpng-day-text: #d4d4d8;
+    --dpng-invalid: #fafafa;
+    --dpng-holiday-color: #a1a1aa;
+
+    color-scheme: dark;
+  }
+}

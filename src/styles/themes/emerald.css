@@ -1,0 +1,78 @@
+/*!
+ * datepicker-nextgen — "emerald" theme
+ *
+ * An emerald accent over warm stone neutrals. The accent is emerald-700 rather
+ * than emerald-500 so white text on the selected day clears WCAG AA (5.5:1).
+ *
+ *   <div class="dpng" data-theme="emerald">
+ *
+ * Tokens only — every component rule lives in styles.css.
+ */
+
+.dpng[data-theme='emerald'] {
+  --dpng-accent: #047857;
+  --dpng-accent-hover: #065f46;
+  --dpng-accent-contrast: #ffffff;
+  --dpng-accent-soft: #ecfdf5;
+  --dpng-range-bg: #ecfdf5;
+  --dpng-range-text: #065f46;
+  --dpng-surface: #fffdfa;
+  --dpng-surface-elevated: #ffffff;
+  --dpng-text: #1c1917;
+  --dpng-text-muted: #6d635b;
+  --dpng-text-subtle: #a8a29e;
+  --dpng-border: #f2efe9;
+  --dpng-border-strong: #e0dbd2;
+  --dpng-hover-bg: #f5f2ec;
+  --dpng-disabled-text: #cfc9c0;
+  --dpng-today-color: #047857;
+  --dpng-weekday-color: #a8a29e;
+  --dpng-badge-bg: #ecfdf5;
+  --dpng-badge-text: #047857;
+  --dpng-blocked-color: #c4beb4;
+  --dpng-preview-bg: #f7f5f0;
+  --dpng-ring: #047857;
+  --dpng-shadow: 0 1px 2px rgba(41, 37, 36, 0.04), 0 12px 32px -12px rgba(41, 37, 36, 0.16);
+  --dpng-card-border: rgba(41, 37, 36, 0.07);
+  --dpng-backdrop: rgba(41, 37, 36, 0.42);
+  --dpng-day-text: #44403c;
+  --dpng-invalid: #b91c1c;
+  --dpng-holiday-color: #a16207;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dpng[data-theme='emerald'] {
+    --dpng-accent: #34d399;
+    --dpng-accent-hover: #6ee7b7;
+    --dpng-accent-contrast: #05221a;
+    --dpng-accent-soft: rgba(52, 211, 153, 0.16);
+    --dpng-range-bg: rgba(52, 211, 153, 0.18);
+    --dpng-range-text: #a7f3d0;
+    --dpng-surface: #1c1917;
+    --dpng-surface-elevated: #292524;
+    --dpng-text: #fafaf9;
+    --dpng-text-muted: #a8a29e;
+    --dpng-text-subtle: #78716c;
+    --dpng-border: #292524;
+    --dpng-border-strong: #44403c;
+    --dpng-hover-bg: #292524;
+    --dpng-disabled-text: #57534e;
+    --dpng-today-color: #34d399;
+    --dpng-weekday-color: #78716c;
+    --dpng-badge-bg: rgba(52, 211, 153, 0.16);
+    --dpng-badge-text: #6ee7b7;
+    --dpng-blocked-color: #78716c;
+    --dpng-preview-bg: rgba(214, 211, 209, 0.09);
+    --dpng-ring: #34d399;
+    --dpng-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -12px rgba(0, 0, 0, 0.65);
+    --dpng-card-border: rgba(214, 211, 209, 0.14);
+    --dpng-backdrop: rgba(12, 10, 9, 0.66);
+    --dpng-day-text: #d6d3d1;
+    --dpng-invalid: #fca5a5;
+    --dpng-holiday-color: #fcd34d;
+
+    color-scheme: dark;
+  }
+}

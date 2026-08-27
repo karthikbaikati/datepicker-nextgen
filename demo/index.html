@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en" data-appearance="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Voyanta — a beach travel page built on datepicker-nextgen</title>
+    <meta
+      name="description"
+      content="Voyanta is a fictional coastal trip planner in which every date-selection moment is a real, live datepicker-nextgen: a headless-first, timezone-safe, fully accessible date picker for React and vanilla JS. Single, range, multiple, week, month, quarter and year selection with presets, constraints, per-day decorations and complete theming. Zero runtime dependencies, MIT licensed."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#fbf6ee" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#07202b" media="(prefers-color-scheme: dark)" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Voyanta — built with datepicker-nextgen" />
+    <meta
+      property="og:description"
+      content="A fictional beach-travel brand where every date field is a live datepicker-nextgen. Headless-first, timezone-safe, fully accessible, zero runtime dependencies."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!--
+      Fraunces for the display headlines, Inter for the UI. Both are loaded with
+      `display=swap` behind a preconnect, and every rule that uses them declares
+      a real fallback stack, so the page is fully legible before either arrives.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Inter:wght@400;500;600;700&display=swap"
+    />
+
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='13' fill='%230e5c6b'/%3E%3Ccircle cx='14' cy='12.4' r='5.2' fill='%23ffd8a8'/%3E%3Cpath d='M4.4 19.4q2.9-2.1 5.8 0t5.8 0 5.8 0M7.4 22.7q2.2-1.6 4.4 0t4.4 0 4.4 0' fill='none' stroke='%237fd4ce' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"
+    />
+
+    <script>
+      // Paint the right background before React boots, so a dark-mode visitor
+      // never gets a white flash between the HTML and the first render.
+      try {
+        var dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.dataset.appearance = dark ? 'dark' : 'light';
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      } catch (error) {
+        /* matchMedia is unavailable — the stylesheet's own default applies. */
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      <p style="font: 16px/1.6 system-ui, sans-serif; margin: 3rem auto; max-width: 40rem">
+        Voyanta is a fictional beach-travel page whose every date field is a live date picker, so
+        it needs JavaScript. The library itself is
+        documented at
+        <a href="https://github.com/karthikbaikati/datepicker-nextgen">github.com/karthikbaikati/datepicker-nextgen</a>.
+      </p>
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

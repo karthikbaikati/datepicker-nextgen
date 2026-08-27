@@ -1,0 +1,47 @@
+/*!
+ * datepicker-nextgen — "midnight" theme
+ *
+ * A rich dark slate surface with an indigo accent. Unlike the built-in dark
+ * mode this theme is unconditional: it stays dark on a light page, which is
+ * what you want for a picker that sits inside a dark hero, sidebar or nav bar.
+ *
+ *   import 'datepicker-nextgen/styles.css';
+ *   import 'datepicker-nextgen/themes/midnight.css';
+ *   <div class="dpng" data-theme="midnight">
+ *
+ * Tokens only — every component rule lives in styles.css.
+ */
+
+.dpng[data-theme='midnight'] {
+  --dpng-accent: #818cf8;
+  --dpng-accent-hover: #a5b4fc;
+  --dpng-accent-contrast: #10132b;
+  --dpng-accent-soft: rgba(129, 140, 248, 0.18);
+  --dpng-range-bg: rgba(129, 140, 248, 0.2);
+  --dpng-range-text: #c7d2fe;
+  --dpng-surface: #131728;
+  --dpng-surface-elevated: #1c2138;
+  --dpng-text: #eef1fb;
+  --dpng-text-muted: #9aa3c0;
+  --dpng-text-subtle: #6b7699;
+  --dpng-border: #232941;
+  --dpng-border-strong: #363d5c;
+  --dpng-hover-bg: #1f2439;
+  --dpng-disabled-text: #4a5273;
+  --dpng-today-color: #a5b4fc;
+  --dpng-weekday-color: #6b7699;
+  --dpng-badge-bg: rgba(129, 140, 248, 0.18);
+  --dpng-badge-text: #c7d2fe;
+  --dpng-blocked-color: #6b7699;
+  --dpng-preview-bg: rgba(199, 210, 254, 0.09);
+  --dpng-ring: #a5b4fc;
+  --dpng-shadow: 0 1px 2px rgba(4, 6, 16, 0.5), 0 18px 44px -16px rgba(4, 6, 16, 0.85);
+  --dpng-card-border: rgba(148, 163, 219, 0.16);
+  --dpng-backdrop: rgba(6, 8, 20, 0.68);
+  --dpng-day-text: #ccd2e8;
+  --dpng-invalid: #fb7185;
+  --dpng-holiday-color: #fcd34d;
+  --dpng-weekend-color: #9aa3c0;
+
+  color-scheme: dark;
+}

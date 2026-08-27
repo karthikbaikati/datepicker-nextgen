@@ -1,0 +1,2183 @@
+/*!
+ * datepicker-nextgen — default stylesheet
+ * MIT licensed. Ships as `datepicker-nextgen/styles.css`.
+ *
+ * ---------------------------------------------------------------------------
+ * HOW THIS FILE IS BUILT
+ * ---------------------------------------------------------------------------
+ * Every visual decision in this file resolves through a custom property named
+ * `--dpng-*`. Component rules never hard-code a colour, radius or duration —
+ * they only read tokens. That means you can restyle the entire picker without
+ * touching a single component selector:
+ *
+ *   .dpng { --dpng-accent: #e11d48; --dpng-radius-card: 8px; }
+ *
+ * To scope a change, target the picker root itself — a bare ancestor will NOT
+ * work. The defaults below are declared *on* `.dpng`, and a declaration on an
+ * element always beats a value inherited from an ancestor, whatever the
+ * ancestor's specificity. So:
+ *
+ *     .checkout-panel .dpng { --dpng-cell-size: 44px; }  ✅ one region
+ *     <div class="dpng" style="--dpng-accent: #059669">  ✅ one instance
+ *     .checkout-panel { --dpng-cell-size: 44px; }        ❌ silently ignored
+ *
+ * THE TOKENS
+ *   colour     accent, accent-hover, accent-contrast, accent-soft, range-bg,
+ *              range-text, surface, surface-elevated, text, text-muted,
+ *              text-subtle, border, border-strong, hover-bg, disabled-text,
+ *              today-color, weekday-color, badge-bg, badge-text,
+ *              blocked-color, preview-bg, ring
+ *   geometry   radius, radius-card, cell-size, cell-radius, gap
+ *   type       font, font-size
+ *   depth      shadow
+ *   motion     duration, ease
+ *   zoom       zoom-gap, zoom-cell-radius, zoom-block-size — the zoomed-out
+ *              month/year/decade grids. `--dpng-zoom-cell-bg` is their
+ *              per-cell fill knob, set by the state rules exactly the way
+ *              `--dpng-day-bg` is set for a day cell.
+ *
+ * THEMES
+ *   Light values live on `.dpng` and are always defined there — no colour in
+ *   this file exists only inside a media query. Dark values are layered twice:
+ *   once for `prefers-color-scheme: dark` (skipped when the author pinned a
+ *   theme) and once for an explicit `[data-theme="dark"]`. Extra themes are
+ *   separate files under `themes/` that override tokens only:
+ *
+ *   import 'datepicker-nextgen/styles.css';
+ *   import 'datepicker-nextgen/themes/emerald.css';
+ *   <div class="dpng" data-theme="emerald">
+ *
+ * SCOPING CONTRACT
+ *   Every selector is scoped under `.dpng`. There is no global reset, no
+ *   `!important`, and no bare element selector — the host page cannot break
+ *   the picker and the picker cannot break the host page.
+ * ---------------------------------------------------------------------------
+ */
+
+/* ========================================================================== */
+/*  Tokens — default (light)                                                  */
+/* ========================================================================== */
+
+.dpng {
+  /* -- colour ------------------------------------------------------------- */
+  --dpng-accent: #2563eb;
+  --dpng-accent-hover: #1d4ed8;
+  --dpng-accent-contrast: #ffffff;
+  --dpng-accent-soft: #eff6ff;
+  --dpng-range-bg: #eff6ff;
+  --dpng-range-text: #1d4ed8;
+  --dpng-surface: #ffffff;
+  --dpng-surface-elevated: #ffffff;
+  --dpng-text: #0f172a;
+  --dpng-text-muted: #64748b;
+  --dpng-text-subtle: #94a3b8;
+  --dpng-border: #f1f5f9;
+  --dpng-border-strong: #e2e8f0;
+  --dpng-hover-bg: #f1f5f9;
+  --dpng-disabled-text: #cbd5e1;
+  --dpng-today-color: #2563eb;
+  --dpng-weekday-color: #94a3b8;
+  --dpng-badge-bg: #eff6ff;
+  --dpng-badge-text: #2563eb;
+  --dpng-blocked-color: #cbd5e1;
+  --dpng-preview-bg: #f8fafc;
+  --dpng-ring: #2563eb;
+
+  /* -- geometry ----------------------------------------------------------- */
+  --dpng-radius: 10px;
+  --dpng-radius-card: 20px;
+  --dpng-cell-size: 36px;
+  --dpng-cell-radius: 999px;
+  --dpng-gap: 2px;
+
+  /* -- type --------------------------------------------------------------- */
+  --dpng-font:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  --dpng-font-size: 12.5px;
+
+  /* -- depth -------------------------------------------------------------- */
+  --dpng-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -12px rgba(15, 23, 42, 0.16);
+
+  /* -- motion ------------------------------------------------------------- */
+  --dpng-duration: 150ms;
+  --dpng-ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* -- derived (secondary knobs; safe to override) ------------------------- */
+  --dpng-card-border: rgba(15, 23, 42, 0.06);
+  --dpng-card-width: 360px;
+  --dpng-card-pad: 18px;
+  --dpng-card-pad-bottom: 14px;
+  --dpng-month-min: 244px;
+  /* Without an upper bound a month grid grows to fill whatever space it is
+     given, which makes a multi-month picker wrap instead of sitting side by
+     side inside a shrink-to-fit parent (a flex or grid item, a popover). */
+  --dpng-month-max: 320px;
+  --dpng-months-gap: 16px 20px;
+  --dpng-months-gap-x: 20px;
+  --dpng-month-columns: 1;
+  --dpng-weeknumber-width: 26px;
+  --dpng-backdrop: rgba(15, 23, 42, 0.45);
+  /* Themes that need a frosted surface set this; see themes/glass.css. */
+  --dpng-card-filter: none;
+  --dpng-nav-button-size: 28px;
+  --dpng-vertical-height: 380px;
+  --dpng-border-width: 1px;
+  --dpng-day-text: #334155;
+  --dpng-invalid: #dc2626;
+  --dpng-holiday-color: #b45309;
+
+  /* Preset chip density — the spec values (11.5px text, 5px 11px padding) at the
+     default `--dpng-font-size`. The default card width is sized so the canonical
+     booking row (Weekend · 3 nights · 1 week · 2 weeks · Clear) stays on one
+     line at these values; lower them if your own preset row is longer. */
+  --dpng-preset-font: 0.86em;
+  --dpng-preset-pad: 5px 10px;
+  --dpng-preset-gap: 5px;
+  /* Set this to give Saturdays and Sundays their own colour. */
+  --dpng-weekend-color: var(--dpng-day-text);
+  /* Stacking level for the popover / modal / sheet layers. */
+  --dpng-layer: 1000;
+  /* Zoomed-out month/year/decade grids. `--dpng-zoom-block-size` is what
+     keeps the card from changing height between levels: six day rows, the
+     five row gaps between them, and the 24px weekday strip those grids do
+     not render. */
+  --dpng-zoom-gap: 6px;
+  --dpng-zoom-cell-radius: var(--dpng-cell-radius);
+  --dpng-zoom-block-size: calc(6 * var(--dpng-cell-size) + 5 * var(--dpng-gap) + 24px);
+}
+
+/* Dark, following the OS — never applied when the author pinned a theme. */
+@media (prefers-color-scheme: dark) {
+  .dpng:not([data-theme]):not([data-theme='light']) {
+    --dpng-accent: #60a5fa;
+    --dpng-accent-hover: #93c5fd;
+    --dpng-accent-contrast: #0b1220;
+    --dpng-accent-soft: rgba(96, 165, 250, 0.16);
+    --dpng-range-bg: rgba(96, 165, 250, 0.18);
+    --dpng-range-text: #bfdbfe;
+    --dpng-surface: #0f172a;
+    --dpng-surface-elevated: #1e293b;
+    --dpng-text: #f1f5f9;
+    --dpng-text-muted: #94a3b8;
+    --dpng-text-subtle: #64748b;
+    --dpng-border: #1e293b;
+    --dpng-border-strong: #334155;
+    --dpng-hover-bg: #1e293b;
+    --dpng-disabled-text: #475569;
+    --dpng-today-color: #60a5fa;
+    --dpng-weekday-color: #64748b;
+    --dpng-badge-bg: rgba(96, 165, 250, 0.16);
+    --dpng-badge-text: #93c5fd;
+    --dpng-blocked-color: #64748b;
+    --dpng-preview-bg: rgba(148, 163, 184, 0.1);
+    --dpng-ring: #60a5fa;
+    --dpng-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+    --dpng-card-border: rgba(148, 163, 184, 0.14);
+    --dpng-backdrop: rgba(2, 6, 23, 0.62);
+    --dpng-day-text: #cbd5e1;
+    --dpng-invalid: #f87171;
+    --dpng-holiday-color: #fbbf24;
+  }
+}
+
+/* Dark, pinned by the author. Identical values, applied unconditionally. */
+.dpng[data-theme='dark'] {
+  --dpng-accent: #60a5fa;
+  --dpng-accent-hover: #93c5fd;
+  --dpng-accent-contrast: #0b1220;
+  --dpng-accent-soft: rgba(96, 165, 250, 0.16);
+  --dpng-range-bg: rgba(96, 165, 250, 0.18);
+  --dpng-range-text: #bfdbfe;
+  --dpng-surface: #0f172a;
+  --dpng-surface-elevated: #1e293b;
+  --dpng-text: #f1f5f9;
+  --dpng-text-muted: #94a3b8;
+  --dpng-text-subtle: #64748b;
+  --dpng-border: #1e293b;
+  --dpng-border-strong: #334155;
+  --dpng-hover-bg: #1e293b;
+  --dpng-disabled-text: #475569;
+  --dpng-today-color: #60a5fa;
+  --dpng-weekday-color: #64748b;
+  --dpng-badge-bg: rgba(96, 165, 250, 0.16);
+  --dpng-badge-text: #93c5fd;
+  --dpng-blocked-color: #64748b;
+  --dpng-preview-bg: rgba(148, 163, 184, 0.1);
+  --dpng-ring: #60a5fa;
+  --dpng-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+  --dpng-card-border: rgba(148, 163, 184, 0.14);
+  --dpng-backdrop: rgba(2, 6, 23, 0.62);
+  --dpng-day-text: #cbd5e1;
+  --dpng-invalid: #f87171;
+  --dpng-holiday-color: #fbbf24;
+}
+
+/* ========================================================================== */
+/*  Sizes                                                                     */
+/* ========================================================================== */
+
+.dpng[data-size='sm'] {
+  --dpng-cell-size: 30px;
+  --dpng-font-size: 11.5px;
+  --dpng-radius-card: 16px;
+  --dpng-card-width: 292px;
+  --dpng-card-pad: 14px;
+  --dpng-card-pad-bottom: 11px;
+  --dpng-month-min: 210px;
+  --dpng-weeknumber-width: 22px;
+  --dpng-nav-button-size: 24px;
+}
+
+.dpng[data-size='md'] {
+  --dpng-cell-size: 36px;
+  --dpng-font-size: 12.5px;
+}
+
+.dpng[data-size='lg'] {
+  --dpng-cell-size: 44px;
+  --dpng-font-size: 14px;
+  --dpng-radius-card: 24px;
+  --dpng-card-width: 400px;
+  --dpng-card-pad: 22px;
+  --dpng-card-pad-bottom: 18px;
+  --dpng-month-min: 300px;
+  --dpng-weeknumber-width: 32px;
+  --dpng-nav-button-size: 32px;
+}
+
+/* ========================================================================== */
+/*  Root + local reset (scoped: nothing here can escape `.dpng`)              */
+/* ========================================================================== */
+
+.dpng,
+.dpng *,
+.dpng *::before,
+.dpng *::after {
+  box-sizing: border-box;
+}
+
+.dpng {
+  display: block;
+  position: relative;
+  margin: 0;
+  color: var(--dpng-text);
+  font-family: var(--dpng-font);
+  font-size: var(--dpng-font-size);
+  font-weight: 400;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  text-align: start;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The element resets are wrapped in `:where()` so they carry the specificity of
+   `.dpng` alone (0,1,0). That is high enough to beat a host page's bare
+   `button { padding: … }` rule, but it ties with every `.dpng-*` component
+   class — and because the components are declared later in this file, they
+   win the tie. Without `:where()` these resets would be (0,1,1) and would
+   silently strip the padding, border and background off every chip and
+   button in the picker. */
+.dpng :where(button) {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-variant-numeric: inherit;
+  line-height: inherit;
+  text-align: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.dpng :where(button):disabled {
+  cursor: default;
+}
+
+.dpng :where(ul, ol, li) {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dpng :where(p, h1, h2, h3, h4, h5, h6) {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.dpng :where(table) {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.dpng :where(svg) {
+  display: block;
+  flex: none;
+}
+
+/* One focus treatment for every interactive element in the picker. The outline
+   follows each element's own border-radius, so circles stay circular. */
+.dpng:focus-visible,
+.dpng :focus-visible {
+  outline: 2px solid var(--dpng-ring);
+  outline-offset: 2px;
+}
+
+/* Native form controls (the month/year selects) follow the resolved theme. */
+.dpng {
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dpng:not([data-theme]):not([data-theme='light']) {
+    color-scheme: dark;
+  }
+}
+
+.dpng[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/* ========================================================================== */
+/*  Card                                                                      */
+/* ========================================================================== */
+
+.dpng-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  inline-size: 100%;
+  max-inline-size: var(--dpng-card-width);
+  padding: var(--dpng-card-pad) var(--dpng-card-pad) var(--dpng-card-pad-bottom);
+  border: var(--dpng-border-width) solid var(--dpng-card-border);
+  border-radius: var(--dpng-radius-card);
+  background: var(--dpng-surface);
+  color: var(--dpng-text);
+}
+
+/* Side-by-side months need the width they ask for. Intrinsic sizing cannot be
+   relied on here: inside a shrink-to-fit parent the card would collapse and the
+   month grid would wrap, so the width is derived from the month count instead
+   and capped at 100% so it still fits a narrow container. */
+.dpng[data-months]:not([data-months='1']) {
+  --dpng-card-width: none;
+}
+
+.dpng[data-months]:not([data-months='1']),
+.dpng[data-months]:not([data-months='1']) .dpng-card {
+  inline-size: min(
+    100%,
+    calc(
+      var(--dpng-month-columns) * var(--dpng-month-max) + (var(--dpng-month-columns) - 1) *
+        var(--dpng-months-gap-x) + 2 * var(--dpng-card-pad) + 2 * var(--dpng-border-width)
+    )
+  );
+}
+
+.dpng[data-months='2'] {
+  --dpng-month-columns: 2;
+}
+.dpng[data-months='3'] {
+  --dpng-month-columns: 3;
+}
+.dpng[data-months='4'] {
+  --dpng-month-columns: 4;
+}
+.dpng[data-months='5'] {
+  --dpng-month-columns: 5;
+}
+.dpng[data-months='6'] {
+  --dpng-month-columns: 6;
+}
+
+/* Vertical orientation is a single scrolling column whatever the month count. */
+.dpng[data-orientation='vertical'] {
+  --dpng-month-columns: 1;
+}
+
+/* ========================================================================== */
+/*  Header                                                                    */
+/* ========================================================================== */
+
+.dpng-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-block-end: 10px;
+  border-block-end: var(--dpng-border-width) solid var(--dpng-border);
+}
+
+.dpng-header__title {
+  font-size: 1.04em;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--dpng-text);
+}
+
+.dpng-header__badge {
+  flex: none;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--dpng-badge-bg);
+  color: var(--dpng-badge-text);
+  font-size: 0.88em;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+/* ========================================================================== */
+/*  Fields (check-in / check-out)                                             */
+/* ========================================================================== */
+
+.dpng-fields {
+  display: flex;
+  align-items: stretch;
+  padding-block: 8px;
+}
+
+.dpng-fields__divider {
+  flex: none;
+  inline-size: var(--dpng-border-width);
+  align-self: stretch;
+  margin-inline: 6px;
+  background: var(--dpng-border);
+}
+
+.dpng-field {
+  display: flex;
+  flex: 1 1 0;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 4px 0;
+  border-radius: var(--dpng-radius);
+  text-align: start;
+  transition: background-color var(--dpng-duration) var(--dpng-ease);
+}
+
+.dpng-field__label {
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dpng-text-subtle);
+}
+
+.dpng-field__value {
+  position: relative;
+  padding-block-end: 8px;
+  font-size: 1.2em;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--dpng-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Empty fields show the muted "Add date" placeholder. */
+.dpng-field:not(.dpng-field--filled) .dpng-field__value {
+  font-weight: 500;
+  color: var(--dpng-text-subtle);
+}
+
+/* The active field is marked by a short accent underline beneath its value. */
+.dpng-field--active .dpng-field__value::after {
+  content: '';
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-start: 0;
+  inline-size: 24px;
+  block-size: 2px;
+  border-radius: 2px;
+  background: var(--dpng-accent);
+}
+
+.dpng-field--invalid .dpng-field__value {
+  color: var(--dpng-invalid);
+}
+
+.dpng-field--invalid .dpng-field__value::after {
+  background: var(--dpng-invalid);
+}
+
+/* ========================================================================== */
+/*  Month navigation                                                          */
+/* ========================================================================== */
+
+.dpng-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-block: 10px 4px;
+}
+
+.dpng-nav__label {
+  margin-inline-end: auto;
+  font-size: 1.04em;
+  font-weight: 600;
+  color: var(--dpng-text);
+}
+
+.dpng-nav__button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--dpng-nav-button-size);
+  block-size: var(--dpng-nav-button-size);
+  border-radius: 8px;
+  color: var(--dpng-text-muted);
+  transition:
+    background-color var(--dpng-duration) var(--dpng-ease),
+    color var(--dpng-duration) var(--dpng-ease);
+}
+
+/* Fixed visual order, so a renderer may emit the two chevrons either way round
+   (and so `.dpng-nav__label`, which has `margin-inline-end: auto`, always keeps
+   them together at the trailing edge). */
+.dpng-nav__button--prev {
+  order: 1;
+}
+
+.dpng-nav__button--next {
+  order: 2;
+}
+
+.dpng-nav__button:hover:not(:disabled) {
+  background: var(--dpng-hover-bg);
+  color: var(--dpng-text);
+}
+
+.dpng-nav__button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.dpng-nav__button svg {
+  inline-size: 62%;
+  block-size: 62%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Chevrons point the other way when the calendar runs right-to-left. */
+.dpng[dir='rtl'] .dpng-nav__button svg {
+  transform: scaleX(-1);
+}
+
+.dpng-nav__selects {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dpng-nav__select {
+  max-inline-size: 11ch;
+  padding: 3px 6px;
+  border: var(--dpng-border-width) solid var(--dpng-border-strong);
+  border-radius: 8px;
+  background: var(--dpng-surface);
+  color: var(--dpng-text);
+  font: inherit;
+  font-size: 0.92em;
+  font-weight: 600;
+  transition: border-color var(--dpng-duration) var(--dpng-ease);
+}
+
+.dpng-nav__select:hover {
+  border-color: var(--dpng-text-subtle);
+}
+
+/* ========================================================================== */
+/*  Months                                                                    */
+/* ========================================================================== */
+
+/*
+ * `auto-fit` rather than a fixed `repeat(N)`: the card is already sized for
+ * `--dpng-month-columns` months, so at full width auto-fit lands on exactly
+ * that many columns — but when the card is squeezed (a narrow popover, a
+ * flexed parent, a tablet in portrait) the strip drops to fewer columns and
+ * wraps instead of crushing every month into an unreadable 20px grid.
+ */
+.dpng-months {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--dpng-month-min), 100%), 1fr));
+  justify-content: center;
+  gap: var(--dpng-months-gap);
+}
+
+/* `inline-size: 100%` is load-bearing: the auto inline margins centre a month
+   that is narrower than its track, but auto margins also suppress the grid
+   item's default stretch — without an explicit size the month would collapse
+   to its min-content width and the day grid would render as a squeezed column. */
+.dpng-month {
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: var(--dpng-month-max);
+  margin-inline: auto;
+}
+
+.dpng-month__caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: 2px 8px;
+  font-size: 1.04em;
+  font-weight: 600;
+  color: var(--dpng-text);
+}
+
+/* Vertical orientation scrolls, with each caption pinned to the top. */
+.dpng[data-orientation='vertical'] .dpng-months {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  max-block-size: var(--dpng-vertical-height);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.dpng[data-orientation='vertical'] .dpng-month {
+  max-inline-size: none;
+}
+
+.dpng[data-orientation='vertical'] .dpng-month__caption {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+  justify-content: flex-start;
+  padding-block: 8px;
+  background: var(--dpng-surface);
+}
+
+/* ========================================================================== */
+/*  Weekday header                                                            */
+/* ========================================================================== */
+
+.dpng-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  column-gap: 0;
+  padding-block-end: 4px;
+}
+
+.dpng[data-week-numbers='true'] .dpng-weekdays {
+  grid-template-columns: var(--dpng-weeknumber-width) repeat(7, minmax(0, 1fr));
+}
+
+.dpng-weekday {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  block-size: 20px;
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--dpng-weekday-color);
+  text-transform: none;
+}
+
+.dpng-weekday--weekend {
+  color: var(--dpng-text-subtle);
+}
+
+/* ========================================================================== */
+/*  Grid                                                                      */
+/* ========================================================================== */
+
+/*
+ * The grid has NO column gap. That is deliberate: the range band is painted by
+ * `.dpng-day__bg`, an inset-0 layer inside each cell, so any horizontal gap
+ * would slice the band into disconnected chunks. Vertical breathing room comes
+ * from `--dpng-gap`, which is applied as a row gap only.
+ *
+ * `.dpng-week` is a real row element (role="row"). It re-uses the parent's
+ * track sizing via `subgrid` so every column lines up exactly with the weekday
+ * header; the repeat() declaration above it is the fallback for engines
+ * without subgrid.
+ */
+.dpng-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  column-gap: 0;
+  row-gap: var(--dpng-gap);
+  border-spacing: 0;
+}
+
+.dpng[data-week-numbers='true'] .dpng-grid {
+  grid-template-columns: auto repeat(7, minmax(0, 1fr));
+}
+
+.dpng-week {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  column-gap: 0;
+}
+
+.dpng[data-week-numbers='true'] .dpng-week {
+  grid-template-columns: var(--dpng-weeknumber-width) repeat(7, minmax(0, 1fr));
+}
+
+@supports (grid-template-columns: subgrid) {
+  .dpng-week,
+  .dpng[data-week-numbers='true'] .dpng-week {
+    grid-template-columns: subgrid;
+  }
+}
+
+.dpng-weeknumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--dpng-weeknumber-width);
+  min-block-size: var(--dpng-cell-size);
+  font-size: 0.8em;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--dpng-text-subtle);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ========================================================================== */
+/*  Day cell                                                                  */
+/* ========================================================================== */
+
+/*
+ * Three stacked layers inside one button:
+ *   z 0  .dpng-day__bg   the range band — fills the cell edge to edge
+ *   z 1  ::before        the round highlight (hover, preview, endpoint circle)
+ *   z 2  the content     number, note, dots, badge, and the "today" dot
+ * `isolation: isolate` keeps that stacking context private to the cell so the
+ * picker never fights the host page's z-index.
+ */
+.dpng-day {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  inline-size: 100%;
+  min-block-size: var(--dpng-cell-size);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--dpng-day-text);
+  font-size: 1em;
+  font-weight: 500;
+  line-height: 1.1;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  transition: color var(--dpng-duration) var(--dpng-ease);
+}
+
+.dpng-day__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  border-radius: 0;
+  background-color: transparent;
+  pointer-events: none;
+}
+
+.dpng-day::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  inline-size: min(100%, var(--dpng-cell-size));
+  block-size: min(100%, var(--dpng-cell-size));
+  margin: auto;
+  border: 0 solid transparent;
+  border-radius: var(--dpng-cell-radius);
+  background-color: var(--dpng-day-bg, transparent);
+  transition:
+    background-color var(--dpng-duration) var(--dpng-ease),
+    transform var(--dpng-duration) var(--dpng-ease);
+  pointer-events: none;
+}
+
+.dpng-day__number,
+.dpng-day__note,
+.dpng-day__dots,
+.dpng-day__badge {
+  position: relative;
+  z-index: 2;
+}
+
+.dpng-day__number {
+  font-variant-numeric: tabular-nums;
+}
+
+.dpng-day__note {
+  font-size: 0.72em;
+  font-weight: 500;
+  line-height: 1;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+.dpng-day__dots {
+  display: flex;
+  gap: 2px;
+  margin-block-start: 1px;
+}
+
+.dpng-day__dot {
+  inline-size: 4px;
+  block-size: 4px;
+  border-radius: 999px;
+  background-color: currentColor;
+}
+
+.dpng-day__badge {
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-end: 2px;
+  min-inline-size: 14px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--dpng-badge-bg);
+  color: var(--dpng-badge-text);
+  font-size: 0.64em;
+  font-weight: 600;
+  line-height: 14px;
+  text-align: center;
+}
+
+/* -- hover / engine-driven hover ------------------------------------------ */
+
+.dpng-day:hover {
+  --dpng-day-bg: var(--dpng-hover-bg);
+}
+
+.dpng-day--hovered {
+  --dpng-day-bg: var(--dpng-hover-bg);
+}
+
+.dpng-day:active::before {
+  transform: scale(0.94);
+}
+
+/* -- day state colours ---------------------------------------------------- */
+/* Ordered from weakest to strongest claim; source order resolves collisions. */
+
+.dpng-day--weekend {
+  color: var(--dpng-weekend-color, var(--dpng-day-text));
+}
+
+.dpng-day--outside {
+  color: var(--dpng-disabled-text);
+}
+
+.dpng-day--holiday {
+  color: var(--dpng-holiday-color);
+}
+
+.dpng-day--today {
+  color: var(--dpng-today-color);
+  font-weight: 600;
+}
+
+/* The "today" marker: a small accent dot below the number. */
+.dpng-day--today::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  inset-inline: 0;
+  inset-block-end: 5px;
+  margin-inline: auto;
+  inline-size: 3px;
+  block-size: 3px;
+  border-radius: 999px;
+  background-color: var(--dpng-today-color);
+}
+
+.dpng-day--in-range {
+  color: var(--dpng-range-text);
+}
+
+.dpng-day--in-range::after {
+  background-color: var(--dpng-range-text);
+}
+
+.dpng-day--disabled,
+.dpng-day:disabled {
+  color: var(--dpng-disabled-text);
+  --dpng-day-bg: transparent;
+}
+
+.dpng-day--disabled:hover,
+.dpng-day:disabled:hover {
+  --dpng-day-bg: transparent;
+}
+
+.dpng .dpng-day.dpng-day--disabled,
+.dpng .dpng-day:disabled {
+  cursor: not-allowed;
+}
+
+.dpng-day--disabled::after,
+.dpng-day:disabled::after {
+  background-color: var(--dpng-disabled-text);
+}
+
+/* Blocked days keep a thin diagonal strike, drawn inside a square the size of
+   the day circle so it never stretches across a wide column. */
+.dpng-day--blocked .dpng-day__bg {
+  background-image: linear-gradient(
+    to top left,
+    transparent calc(50% - 0.5px),
+    var(--dpng-blocked-color) calc(50% - 0.5px),
+    var(--dpng-blocked-color) calc(50% + 0.5px),
+    transparent calc(50% + 0.5px)
+  );
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: var(--dpng-cell-size) var(--dpng-cell-size);
+}
+
+/* -- range band ----------------------------------------------------------- */
+
+.dpng-day--in-range .dpng-day__bg,
+.dpng-day--range-start .dpng-day__bg,
+.dpng-day--range-end .dpng-day__bg {
+  background-color: var(--dpng-range-bg);
+}
+
+/* Endpoints carry only half a band, so it appears to grow out of the circle. */
+.dpng-day--range-start .dpng-day__bg {
+  inset-inline-start: 50%;
+}
+
+.dpng-day--range-end .dpng-day__bg {
+  inset-inline-end: 50%;
+}
+
+/* A one-day range is a plain circle: start and end land on the same cell. */
+.dpng-day--range-start.dpng-day--range-end .dpng-day__bg {
+  display: none;
+}
+
+/* -- preview (drawing the range with the pointer or keyboard) -------------- */
+
+.dpng-day--preview .dpng-day__bg,
+.dpng-day--preview-start .dpng-day__bg,
+.dpng-day--preview-end .dpng-day__bg {
+  background-color: var(--dpng-preview-bg);
+}
+
+.dpng-day--preview-start .dpng-day__bg {
+  inset-inline-start: 50%;
+}
+
+.dpng-day--preview-end .dpng-day__bg {
+  inset-inline-end: 50%;
+}
+
+.dpng-day--preview-start.dpng-day--preview-end .dpng-day__bg {
+  display: none;
+}
+
+/* The tentative end gets a dashed accent ring — clearly not a selection. */
+.dpng-day--preview-end,
+.dpng-day--preview-end:hover {
+  --dpng-day-bg: var(--dpng-preview-bg);
+  color: var(--dpng-range-text);
+}
+
+.dpng-day--preview-end::before {
+  border-width: 1px;
+  border-style: dashed;
+  border-color: var(--dpng-accent);
+}
+
+/* -- band cap rounding ---------------------------------------------------- */
+/*
+ * The band is square where it continues into the next cell and rounded where
+ * it stops: at the range/preview endpoints and at both ends of every row.
+ * `:nth-last-child(7)` finds the first day of a row whether or not a week
+ * number cell precedes it; the `.dpng-grid > .dpng-day` selectors cover
+ * renderers that emit a flat grid with no row wrapper.
+ */
+.dpng-day--range-start .dpng-day__bg,
+.dpng-day--preview-start .dpng-day__bg,
+.dpng-week > .dpng-day:first-child .dpng-day__bg,
+.dpng-week > .dpng-day:nth-last-child(7) .dpng-day__bg,
+.dpng-grid > .dpng-day:nth-child(7n + 1) .dpng-day__bg {
+  border-start-start-radius: var(--dpng-cell-radius);
+  border-end-start-radius: var(--dpng-cell-radius);
+}
+
+.dpng-day--range-end .dpng-day__bg,
+.dpng-day--preview-end .dpng-day__bg,
+.dpng-week > .dpng-day:last-child .dpng-day__bg,
+.dpng-grid > .dpng-day:nth-child(7n) .dpng-day__bg {
+  border-start-end-radius: var(--dpng-cell-radius);
+  border-end-end-radius: var(--dpng-cell-radius);
+}
+
+.dpng[data-week-numbers='true'] .dpng-grid > .dpng-day:nth-child(8n + 2) .dpng-day__bg {
+  border-start-start-radius: var(--dpng-cell-radius);
+  border-end-start-radius: var(--dpng-cell-radius);
+}
+
+.dpng[data-week-numbers='true'] .dpng-grid > .dpng-day:nth-child(8n) .dpng-day__bg {
+  border-start-end-radius: var(--dpng-cell-radius);
+  border-end-end-radius: var(--dpng-cell-radius);
+}
+
+/* -- selected endpoints (painted last: they outrank every other state) ----- */
+
+.dpng-day--selected,
+.dpng-day--selected:hover,
+.dpng-day--range-start,
+.dpng-day--range-start:hover,
+.dpng-day--range-end,
+.dpng-day--range-end:hover {
+  --dpng-day-bg: var(--dpng-accent);
+  color: var(--dpng-accent-contrast);
+  font-weight: 600;
+}
+
+.dpng-day--selected:hover:not(.dpng-day--disabled),
+.dpng-day--range-start:hover:not(.dpng-day--disabled),
+.dpng-day--range-end:hover:not(.dpng-day--disabled) {
+  --dpng-day-bg: var(--dpng-accent-hover);
+}
+
+.dpng-day--selected::after,
+.dpng-day--range-start::after,
+.dpng-day--range-end::after {
+  background-color: var(--dpng-accent-contrast);
+}
+
+/* The ring belongs on the circle, not on the full-width cell box. */
+.dpng-day:focus-visible {
+  outline: none;
+}
+
+.dpng-day:focus-visible::before,
+.dpng-grid:focus-within .dpng-day--focused::before {
+  outline: 2px solid var(--dpng-ring);
+  outline-offset: 2px;
+}
+
+/* While the second half of a range is being picked, the pointer target hints
+   at the accent rather than the neutral hover grey. */
+.dpng[data-selecting='true'][data-mode='range']
+  .dpng-day--hovered:not(.dpng-day--disabled):not(.dpng-day--selected):not(
+    .dpng-day--range-start
+  ):not(.dpng-day--range-end) {
+  --dpng-day-bg: var(--dpng-accent-soft);
+}
+
+/* A day carrying a note is taller than it is wide; the highlight becomes a
+   stadium so it still wraps the whole cell rather than a circle in its middle. */
+@supports selector(:has(*)) {
+  .dpng-day:has(.dpng-day__note)::before {
+    inline-size: 100%;
+    block-size: 100%;
+    border-radius: calc(var(--dpng-cell-size) / 2);
+  }
+
+  .dpng-day--today:has(.dpng-day__note)::after {
+    display: none;
+  }
+}
+
+/* ========================================================================== */
+/*  Zoomed-out grids (month / year / decade)                                  */
+/* ========================================================================== */
+
+/*
+ * One 3 × 4 grid serves all three zoomed-out levels: twelve months, twelve
+ * years, twelve decades.
+ *
+ * It stands in for the entire month block rather than sitting beside it, so
+ * `--dpng-zoom-block-size` reproduces the height the day grid would have taken:
+ * six week rows, their row gaps, and the 24px weekday strip (a 20px cell plus
+ * its 4px padding) that the zoom grid does not render. Without that the card
+ * would change height on every zoom, which reads as a broken popover.
+ *
+ * The cells hold "September" or "2020s" rather than "7", so they are wide
+ * stadiums instead of circles — but every colour, radius and duration still
+ * resolves through the tokens the day cell uses, and `--dpng-zoom-cell-bg`
+ * drives the fill exactly as `--dpng-day-bg` does there.
+ */
+.dpng-zoom {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(var(--dpng-cell-size), 1fr));
+  gap: var(--dpng-zoom-gap);
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: var(--dpng-month-max);
+  min-block-size: var(--dpng-zoom-block-size);
+  margin-inline: auto;
+}
+
+/* Rendered inside the month strip, the grid replaces every month at once — it
+   must span the whole strip, not drop into the first column of a two- or
+   three-month layout. */
+.dpng-months > .dpng-zoom {
+  grid-column: 1 / -1;
+}
+
+/* The same subgrid arrangement as `.dpng-week`: the row is a real `role="row"`
+   element that re-uses its parent's column tracks, with the repeat() above it
+   as the fallback for engines without subgrid. */
+.dpng-zoom__row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: var(--dpng-zoom-gap);
+}
+
+@supports (grid-template-columns: subgrid) {
+  .dpng-zoom__row {
+    grid-template-columns: subgrid;
+  }
+}
+
+.dpng-zoom__cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  /* `safe` so a label too long for its cell (a narrow card, a verbose locale)
+     is clipped only at its end instead of at both. The plain value below it is
+     the fallback for engines without the keyword. */
+  justify-content: center;
+  justify-content: safe center;
+  inline-size: 100%;
+  min-inline-size: 0;
+  block-size: 100%;
+  min-block-size: var(--dpng-cell-size);
+  padding: 4px 6px;
+  border: 0;
+  border-radius: var(--dpng-zoom-cell-radius);
+  background-color: var(--dpng-zoom-cell-bg, transparent);
+  color: var(--dpng-day-text);
+  font-size: 1em;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  transition:
+    background-color var(--dpng-duration) var(--dpng-ease),
+    color var(--dpng-duration) var(--dpng-ease),
+    transform var(--dpng-duration) var(--dpng-ease);
+}
+
+/* -- cell state ----------------------------------------------------------- */
+/* Ordered from weakest to strongest claim, exactly as the day cell is: source
+   order resolves collisions, and selected is painted last. */
+
+.dpng-zoom__cell:hover {
+  --dpng-zoom-cell-bg: var(--dpng-hover-bg);
+}
+
+.dpng-zoom__cell--current {
+  color: var(--dpng-today-color);
+  font-weight: 600;
+}
+
+/* The "today" marker, matching the day cell's dot. It takes the cell's own
+   colour, so it stays legible on the accent fill without a second rule. */
+.dpng-zoom__cell--current::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 6px;
+  margin-inline: auto;
+  inline-size: 3px;
+  block-size: 3px;
+  border-radius: 999px;
+  background-color: currentColor;
+}
+
+.dpng-zoom__cell--disabled,
+.dpng-zoom__cell:disabled {
+  --dpng-zoom-cell-bg: transparent;
+  color: var(--dpng-disabled-text);
+}
+
+.dpng-zoom__cell--disabled:hover,
+.dpng-zoom__cell:disabled:hover {
+  --dpng-zoom-cell-bg: transparent;
+}
+
+.dpng .dpng-zoom__cell--disabled,
+.dpng .dpng-zoom__cell:disabled {
+  cursor: not-allowed;
+}
+
+.dpng-zoom__cell--selected,
+.dpng-zoom__cell--selected:hover {
+  --dpng-zoom-cell-bg: var(--dpng-accent);
+  color: var(--dpng-accent-contrast);
+  font-weight: 600;
+}
+
+.dpng-zoom__cell--selected:hover:not(.dpng-zoom__cell--disabled):not(:disabled) {
+  --dpng-zoom-cell-bg: var(--dpng-accent-hover);
+}
+
+/* The ring follows the cell's own radius. The second selector is the fallback
+   for a renderer that parks focus on the grid and moves the roving tabindex
+   instead of the focus — the day grid carries the same pair. */
+.dpng-zoom__cell:focus-visible,
+.dpng-zoom:focus-within .dpng-zoom__cell[tabindex='0'] {
+  outline: 2px solid var(--dpng-ring);
+  outline-offset: 2px;
+}
+
+/* Forced colours drop the accent fill, so the selection needs a real border. */
+@media (forced-colors: active) {
+  .dpng-zoom__cell--selected {
+    border: 2px solid Highlight;
+  }
+}
+
+/* -- the caption as a zoom-out control ------------------------------------- */
+
+/*
+ * Pressable, but still a caption: it keeps the label's type and colour and
+ * gains only a hover wash, a caret and the standard ring. The negative inline
+ * start margin cancels the button's own padding so the text stays optically
+ * aligned with the plain `<span>` caption it replaces.
+ */
+.dpng-nav__label--button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-inline-start: -7px;
+  padding: 3px 7px;
+  border-radius: 8px;
+  color: var(--dpng-text);
+  transition:
+    background-color var(--dpng-duration) var(--dpng-ease),
+    color var(--dpng-duration) var(--dpng-ease);
+}
+
+.dpng-nav__label--button:hover {
+  background: var(--dpng-hover-bg);
+}
+
+/*
+ * The caret. Physical border sides on purpose: the box is rotated 45°, which is
+ * a physical operation, so logical sides would swing the caret sideways in RTL
+ * instead of leaving it pointing down.
+ */
+.dpng-nav__label--button::after {
+  content: '';
+  inline-size: 5px;
+  block-size: 5px;
+  margin-block-start: -2px;
+  border-right: 1.5px solid var(--dpng-text-subtle);
+  border-bottom: 1.5px solid var(--dpng-text-subtle);
+  transform: rotate(45deg);
+}
+
+.dpng-nav__label--button:hover::after {
+  border-color: var(--dpng-text-muted);
+}
+
+/* A renderer may ship its own chevron; where it does, drop the CSS one. */
+@supports selector(:has(*)) {
+  .dpng-nav__label--button:has(svg)::after {
+    display: none;
+  }
+}
+
+.dpng-nav__label--button svg {
+  inline-size: 0.86em;
+  block-size: 0.86em;
+  color: var(--dpng-text-subtle);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* -- zoom motion ---------------------------------------------------------- */
+
+/*
+ * A level change swaps twelve cells at once, so it gets a short settle rather
+ * than a hard cut. The animation has to replay on every zoom, but a renderer
+ * that patches the grid in place keeps the same element, and an animation only
+ * restarts when its name changes — hence two identical keyframes alternating by
+ * level. Zooming steps one level at a time, so month/decade and year always
+ * alternate, and the name always changes.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .dpng[data-view='month'] .dpng-zoom,
+  .dpng[data-view='decade'] .dpng-zoom {
+    animation: dpng-zoom-step-a var(--dpng-duration) var(--dpng-ease) both;
+  }
+
+  .dpng[data-view='year'] .dpng-zoom {
+    animation: dpng-zoom-step-b var(--dpng-duration) var(--dpng-ease) both;
+  }
+
+  .dpng-zoom__cell:active:not(.dpng-zoom__cell--disabled):not(:disabled) {
+    transform: scale(0.97);
+  }
+}
+
+@keyframes dpng-zoom-step-a {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes dpng-zoom-step-b {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ========================================================================== */
+/*  Presets                                                                   */
+/* ========================================================================== */
+
+.dpng-presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dpng-preset-gap);
+  margin-block-start: 12px;
+  padding-block-start: 12px;
+  border-block-start: var(--dpng-border-width) solid var(--dpng-border);
+}
+
+.dpng-preset {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: var(--dpng-preset-pad);
+  border: var(--dpng-border-width) solid var(--dpng-border-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dpng-day-text);
+  font-size: var(--dpng-preset-font);
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  transition:
+    background-color var(--dpng-duration) var(--dpng-ease),
+    border-color var(--dpng-duration) var(--dpng-ease),
+    color var(--dpng-duration) var(--dpng-ease);
+}
+
+.dpng-preset:hover {
+  background: var(--dpng-preview-bg);
+  border-color: var(--dpng-text-subtle);
+}
+
+.dpng-preset__hint {
+  color: var(--dpng-text-subtle);
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.dpng-preset--active {
+  border-color: var(--dpng-accent);
+  background: var(--dpng-accent-soft);
+  color: var(--dpng-accent);
+}
+
+.dpng-preset--active:hover {
+  background: var(--dpng-accent-soft);
+  border-color: var(--dpng-accent);
+}
+
+.dpng-preset--active .dpng-preset__hint {
+  color: var(--dpng-accent);
+}
+
+.dpng-preset--disabled,
+.dpng-preset:disabled {
+  border-color: var(--dpng-border);
+  background: transparent;
+  color: var(--dpng-disabled-text);
+}
+
+.dpng .dpng-preset--disabled,
+.dpng .dpng-preset:disabled {
+  cursor: not-allowed;
+}
+
+.dpng-preset--disabled .dpng-preset__hint,
+.dpng-preset:disabled .dpng-preset__hint {
+  color: var(--dpng-disabled-text);
+}
+
+/* ========================================================================== */
+/*  Buttons                                                                   */
+/* ========================================================================== */
+
+.dpng-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: var(--dpng-border-width) solid transparent;
+  border-radius: var(--dpng-radius);
+  background: transparent;
+  color: var(--dpng-text);
+  font-size: 0.92em;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  transition:
+    background-color var(--dpng-duration) var(--dpng-ease),
+    border-color var(--dpng-duration) var(--dpng-ease),
+    color var(--dpng-duration) var(--dpng-ease);
+}
+
+.dpng-button:hover {
+  background: var(--dpng-hover-bg);
+}
+
+.dpng-button:disabled {
+  opacity: 0.45;
+}
+
+.dpng-button--primary {
+  border-color: var(--dpng-accent);
+  background: var(--dpng-accent);
+  color: var(--dpng-accent-contrast);
+}
+
+.dpng-button--primary:hover {
+  border-color: var(--dpng-accent-hover);
+  background: var(--dpng-accent-hover);
+}
+
+.dpng-button--subtle {
+  border-color: var(--dpng-border-strong);
+  background: var(--dpng-surface);
+  color: var(--dpng-text);
+}
+
+.dpng-button--subtle:hover {
+  background: var(--dpng-hover-bg);
+}
+
+/* The bare `Clear` action that sits at the end of the presets row. */
+.dpng-button--ghost {
+  padding: 5px 4px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--dpng-text-muted);
+  font-size: 0.92em;
+  font-weight: 500;
+}
+
+.dpng-button--ghost:hover {
+  background: transparent;
+  color: var(--dpng-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dpng-button--icon {
+  inline-size: var(--dpng-nav-button-size);
+  block-size: var(--dpng-nav-button-size);
+  padding: 0;
+  border-radius: 8px;
+  color: var(--dpng-text-muted);
+}
+
+.dpng-button--icon svg {
+  inline-size: 62%;
+  block-size: 62%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* `Clear` is pushed to the trailing edge of the presets row. */
+.dpng-presets > .dpng-button--ghost:last-child {
+  margin-inline-start: auto;
+}
+
+/* ========================================================================== */
+/*  Footer                                                                    */
+/* ========================================================================== */
+
+.dpng-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-block-start: 12px;
+  padding-block-start: 12px;
+  border-block-start: var(--dpng-border-width) solid var(--dpng-border);
+}
+
+.dpng-footer__info {
+  min-inline-size: 0;
+  color: var(--dpng-text-muted);
+  font-size: 0.92em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dpng-footer__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ========================================================================== */
+/*  Time row                                                                  */
+/* ========================================================================== */
+
+.dpng-time {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-block-start: 12px;
+  padding-block-start: 12px;
+  border-block-start: var(--dpng-border-width) solid var(--dpng-border);
+}
+
+.dpng-time__field {
+  display: flex;
+  flex: 1 1 120px;
+  align-items: center;
+  gap: 6px;
+  min-inline-size: 0;
+  color: var(--dpng-text-muted);
+  font-size: 0.88em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dpng-time__select {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  padding: 5px 8px;
+  border: var(--dpng-border-width) solid var(--dpng-border-strong);
+  border-radius: var(--dpng-radius);
+  background: var(--dpng-surface);
+  color: var(--dpng-text);
+  font: inherit;
+  font-size: 1em;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  transition: border-color var(--dpng-duration) var(--dpng-ease);
+}
+
+.dpng-time__select:hover {
+  border-color: var(--dpng-text-subtle);
+}
+
+/* ========================================================================== */
+/*  Text input                                                                */
+/* ========================================================================== */
+
+.dpng-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+  inline-size: 100%;
+}
+
+.dpng-input__field {
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: 9px 12px;
+  border: var(--dpng-border-width) solid var(--dpng-border-strong);
+  border-radius: var(--dpng-radius);
+  background: var(--dpng-surface);
+  color: var(--dpng-text);
+  font: inherit;
+  font-size: 1.04em;
+  font-weight: 500;
+  transition:
+    border-color var(--dpng-duration) var(--dpng-ease),
+    box-shadow var(--dpng-duration) var(--dpng-ease);
+}
+
+.dpng-input__field::placeholder {
+  color: var(--dpng-text-subtle);
+  opacity: 1;
+}
+
+.dpng-input__field:hover {
+  border-color: var(--dpng-text-subtle);
+}
+
+.dpng-input__field:focus {
+  border-color: var(--dpng-accent);
+  outline: none;
+}
+
+.dpng-input__field:focus-visible {
+  border-color: var(--dpng-accent);
+}
+
+.dpng-input__field:disabled {
+  background: var(--dpng-hover-bg);
+  color: var(--dpng-disabled-text);
+  cursor: not-allowed;
+}
+
+.dpng-input__field[aria-invalid='true'] {
+  border-color: var(--dpng-invalid);
+}
+
+/* The icon overlays the field's trailing edge, so pad the text out of its way. */
+.dpng-input__icon {
+  position: absolute;
+  inset-inline-end: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 16px;
+  block-size: 16px;
+  color: var(--dpng-text-subtle);
+  pointer-events: none;
+}
+
+.dpng-input__icon svg {
+  inline-size: 100%;
+  block-size: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dpng-input:has(.dpng-input__icon) .dpng-input__field {
+  padding-inline-end: 34px;
+}
+
+/* ========================================================================== */
+/*  Surfaces + variants                                                       */
+/* ========================================================================== */
+
+.dpng-card {
+  box-shadow: var(--dpng-shadow);
+  -webkit-backdrop-filter: var(--dpng-card-filter);
+  backdrop-filter: var(--dpng-card-filter);
+}
+
+/* inline — the default presentation: a plain card in the document flow. */
+.dpng[data-variant='inline'] {
+  position: relative;
+}
+
+.dpng[data-variant='inline'] .dpng-card {
+  box-shadow: var(--dpng-shadow);
+}
+
+/* popover — a floating panel. Placement is set by the renderer as inline
+   styles; this only supplies the layer, the sizing and the entrance. */
+.dpng.dpng-popover,
+.dpng .dpng-popover {
+  position: absolute;
+  z-index: var(--dpng-layer, 1000);
+  inline-size: max-content;
+  max-inline-size: calc(100vw - 16px);
+}
+
+.dpng[data-variant='popover'] .dpng-card {
+  box-shadow: var(--dpng-shadow);
+}
+
+/* modal — a centred dialog over a dimming backdrop. */
+.dpng.dpng-backdrop,
+.dpng .dpng-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--dpng-layer, 1000) - 1);
+  background: var(--dpng-backdrop);
+}
+
+.dpng[data-variant='modal'] {
+  position: fixed;
+  inset: 0;
+  z-index: var(--dpng-layer, 1000);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.dpng[data-variant='modal'] .dpng-card {
+  position: relative;
+  z-index: 1;
+  max-block-size: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* sheet — a bottom sheet for narrow screens, with a drag handle. */
+.dpng[data-variant='sheet'] {
+  position: fixed;
+  inset: 0;
+  z-index: var(--dpng-layer, 1000);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.dpng.dpng-sheet,
+.dpng .dpng-sheet {
+  position: relative;
+  z-index: 1;
+  inline-size: 100%;
+  max-inline-size: 560px;
+  max-block-size: 92dvh;
+  padding-block: 20px max(16px, env(safe-area-inset-bottom, 0px));
+  padding-inline: 4px;
+  border-start-start-radius: var(--dpng-radius-card);
+  border-start-end-radius: var(--dpng-radius-card);
+  background: var(--dpng-surface);
+  box-shadow: var(--dpng-shadow);
+  -webkit-backdrop-filter: var(--dpng-card-filter);
+  backdrop-filter: var(--dpng-card-filter);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* The drag handle. Decorative only — dragging is wired up by the renderer. */
+.dpng.dpng-sheet::before,
+.dpng .dpng-sheet::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 8px;
+  inset-inline: 0;
+  margin-inline: auto;
+  inline-size: 36px;
+  block-size: 4px;
+  border-radius: 999px;
+  background: var(--dpng-border-strong);
+}
+
+/* Inside a sheet the card is edge-to-edge and loses its own chrome. */
+.dpng[data-variant='sheet'] .dpng-card {
+  max-inline-size: none;
+  border-color: transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* ========================================================================== */
+/*  Tooltip + live region                                                     */
+/* ========================================================================== */
+
+.dpng .dpng-tooltip {
+  position: absolute;
+  z-index: calc(var(--dpng-layer, 1000) + 1);
+  max-inline-size: 220px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: var(--dpng-text);
+  color: var(--dpng-surface);
+  font-size: 0.88em;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: center;
+  pointer-events: none;
+}
+
+/*
+ * The announcement channel for assistive tech. It must stay in the accessibility
+ * tree, so it is clipped rather than hidden: `display: none` / `visibility:
+ * hidden` would stop screen readers from reading updates entirely.
+ */
+.dpng-live {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  word-wrap: normal;
+}
+
+/* ========================================================================== */
+/*  Motion                                                                    */
+/* ========================================================================== */
+
+@media (prefers-reduced-motion: no-preference) {
+  .dpng.dpng-popover,
+  .dpng .dpng-popover {
+    animation: dpng-pop-in var(--dpng-duration) var(--dpng-ease) both;
+  }
+
+  .dpng.dpng-sheet,
+  .dpng .dpng-sheet {
+    animation: dpng-sheet-up 240ms var(--dpng-ease) both;
+  }
+
+  .dpng.dpng-backdrop,
+  .dpng .dpng-backdrop {
+    animation: dpng-fade-in var(--dpng-duration) var(--dpng-ease) both;
+  }
+}
+
+@keyframes dpng-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes dpng-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+@keyframes dpng-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/*
+ * Reduced motion is handled twice over: the duration token collapses (which
+ * neutralises every transition in this file, since they all read it) and the
+ * catch-all below covers anything a consumer added on top.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .dpng {
+    --dpng-duration: 0.01ms;
+  }
+
+  .dpng,
+  .dpng *,
+  .dpng *::before,
+  .dpng *::after {
+    animation-duration: 0.01ms;
+    animation-delay: 0ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+    transition-delay: 0ms;
+    scroll-behavior: auto;
+  }
+
+  .dpng .dpng-day:active::before {
+    transform: none;
+  }
+}
+
+/* ========================================================================== */
+/*  Narrow screens                                                            */
+/* ========================================================================== */
+
+@media (max-width: 420px) {
+  /* Full-bleed card, comfortable 40px touch targets, months stacked. */
+  .dpng,
+  .dpng[data-size='sm'],
+  .dpng[data-size='md'] {
+    --dpng-cell-size: 40px;
+    --dpng-card-width: none;
+    --dpng-month-min: 100%;
+    --dpng-month-max: none;
+    --dpng-nav-button-size: 36px;
+    --dpng-card-pad: 16px;
+  }
+
+  .dpng[data-size='lg'] {
+    --dpng-card-width: none;
+    --dpng-month-min: 100%;
+    --dpng-month-max: none;
+    --dpng-nav-button-size: 36px;
+  }
+
+  /* However many months are configured, a phone shows one column. */
+  .dpng[data-months] {
+    --dpng-month-columns: 1;
+  }
+
+  .dpng-card,
+  .dpng[data-months]:not([data-months='1']),
+  .dpng[data-months]:not([data-months='1']) .dpng-card {
+    inline-size: 100%;
+  }
+
+  .dpng-presets {
+    gap: 8px;
+  }
+
+  .dpng-preset {
+    padding: 7px 12px;
+  }
+
+  /* One-handed sheet: edge to edge, taller thumb zone, no side inset. */
+  .dpng.dpng-sheet,
+  .dpng .dpng-sheet {
+    max-inline-size: none;
+    max-block-size: 88dvh;
+    padding-inline: 0;
+    padding-block-end: max(20px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .dpng[data-variant='sheet'] .dpng-card {
+    --dpng-card-pad: 16px;
+    --dpng-card-pad-bottom: 16px;
+  }
+
+  .dpng[data-variant='sheet'] .dpng-footer__actions .dpng-button {
+    padding-block: 11px;
+  }
+
+  .dpng[data-variant='modal'] {
+    padding: 12px;
+  }
+}
+
+/* ========================================================================== */
+/*  Increased contrast                                                        */
+/* ========================================================================== */
+
+@media (prefers-contrast: more) {
+  .dpng {
+    --dpng-border-width: 2px;
+    --dpng-border: #94a3b8;
+    --dpng-border-strong: #475569;
+    --dpng-card-border: #475569;
+    --dpng-text-muted: #334155;
+    --dpng-text-subtle: #475569;
+    --dpng-weekday-color: #334155;
+    --dpng-day-text: #0f172a;
+    --dpng-disabled-text: #64748b;
+    --dpng-blocked-color: #334155;
+    --dpng-accent: #1d4ed8;
+    --dpng-accent-hover: #1e3a8a;
+    --dpng-accent-soft: #dbeafe;
+    --dpng-range-bg: #dbeafe;
+    --dpng-range-text: #1e3a8a;
+    --dpng-preview-bg: #e2e8f0;
+    --dpng-badge-bg: #dbeafe;
+    --dpng-badge-text: #1e3a8a;
+    --dpng-hover-bg: #e2e8f0;
+  }
+
+  .dpng :focus-visible {
+    outline-width: 3px;
+  }
+
+  .dpng-preset,
+  .dpng-nav__select,
+  .dpng-time__select,
+  .dpng-input__field {
+    border-color: var(--dpng-border-strong);
+  }
+}
+
+@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
+  .dpng:not([data-theme]):not([data-theme='light']) {
+    --dpng-border: #64748b;
+    --dpng-border-strong: #cbd5e1;
+    --dpng-card-border: #cbd5e1;
+    --dpng-text-muted: #e2e8f0;
+    --dpng-text-subtle: #cbd5e1;
+    --dpng-weekday-color: #cbd5e1;
+    --dpng-day-text: #f8fafc;
+    --dpng-disabled-text: #94a3b8;
+    --dpng-blocked-color: #cbd5e1;
+    --dpng-accent: #93c5fd;
+    --dpng-accent-hover: #bfdbfe;
+    --dpng-accent-contrast: #020617;
+    --dpng-accent-soft: rgba(147, 197, 253, 0.28);
+    --dpng-range-bg: rgba(147, 197, 253, 0.3);
+    --dpng-range-text: #e0f2fe;
+    --dpng-preview-bg: rgba(226, 232, 240, 0.18);
+    --dpng-badge-bg: rgba(147, 197, 253, 0.28);
+    --dpng-badge-text: #e0f2fe;
+    --dpng-hover-bg: #334155;
+  }
+}
+
+/* Windows High Contrast / forced-colors: hand every surface to the OS palette. */
+@media (forced-colors: active) {
+  .dpng {
+    --dpng-accent: Highlight;
+    --dpng-accent-hover: Highlight;
+    --dpng-accent-contrast: HighlightText;
+    --dpng-accent-soft: Canvas;
+    --dpng-range-bg: Canvas;
+    --dpng-range-text: CanvasText;
+    --dpng-surface: Canvas;
+    --dpng-surface-elevated: Canvas;
+    --dpng-text: CanvasText;
+    --dpng-text-muted: CanvasText;
+    --dpng-text-subtle: CanvasText;
+    --dpng-day-text: CanvasText;
+    --dpng-border: CanvasText;
+    --dpng-border-strong: CanvasText;
+    --dpng-card-border: CanvasText;
+    --dpng-hover-bg: Canvas;
+    --dpng-disabled-text: GrayText;
+    --dpng-blocked-color: GrayText;
+    --dpng-today-color: CanvasText;
+    --dpng-weekday-color: CanvasText;
+    --dpng-badge-bg: Canvas;
+    --dpng-badge-text: CanvasText;
+    --dpng-preview-bg: Canvas;
+    --dpng-ring: Highlight;
+    --dpng-shadow: none;
+  }
+
+  /* Forced colors drop background paints, so the band needs a real outline. */
+  .dpng-day--in-range .dpng-day__bg,
+  .dpng-day--range-start .dpng-day__bg,
+  .dpng-day--range-end .dpng-day__bg {
+    border-block: 1px solid CanvasText;
+    forced-color-adjust: none;
+  }
+
+  .dpng-day--selected::before,
+  .dpng-day--range-start::before,
+  .dpng-day--range-end::before {
+    border: 2px solid Highlight;
+  }
+}
+
+/* ========================================================================== */
+/*  Print                                                                     */
+/* ========================================================================== */
+
+@media print {
+  /* Re-point the tokens at a black-and-white palette; the component rules
+     below are unchanged, they simply resolve to ink instead of colour. */
+  .dpng {
+    --dpng-accent: #000000;
+    --dpng-accent-hover: #000000;
+    --dpng-accent-contrast: #ffffff;
+    --dpng-accent-soft: #ffffff;
+    --dpng-range-bg: #e8e8e8;
+    --dpng-range-text: #000000;
+    --dpng-surface: #ffffff;
+    --dpng-surface-elevated: #ffffff;
+    --dpng-text: #000000;
+    --dpng-text-muted: #333333;
+    --dpng-text-subtle: #555555;
+    --dpng-day-text: #000000;
+    --dpng-border: #cccccc;
+    --dpng-border-strong: #999999;
+    --dpng-card-border: #999999;
+    --dpng-hover-bg: #ffffff;
+    --dpng-disabled-text: #999999;
+    --dpng-blocked-color: #666666;
+    --dpng-today-color: #000000;
+    --dpng-weekday-color: #333333;
+    --dpng-badge-bg: #ffffff;
+    --dpng-badge-text: #000000;
+    --dpng-preview-bg: #ffffff;
+    --dpng-shadow: none;
+    --dpng-card-width: none;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .dpng-card {
+    border-color: var(--dpng-border-strong);
+    box-shadow: none;
+    break-inside: avoid;
+  }
+
+  .dpng-nav__button,
+  .dpng-nav__selects,
+  .dpng-presets,
+  .dpng-footer__actions,
+  .dpng-tooltip,
+  .dpng-backdrop,
+  .dpng-input__icon {
+    display: none;
+  }
+
+  .dpng-header__badge {
+    border: 1px solid var(--dpng-border-strong);
+  }
+
+  .dpng-month,
+  .dpng-week {
+    break-inside: avoid;
+  }
+
+  /* Selected days print as a filled disc; unselected ink stays plain. */
+  .dpng-day--selected::before,
+  .dpng-day--range-start::before,
+  .dpng-day--range-end::before {
+    background-color: #000000;
+  }
+
+  .dpng[data-orientation='vertical'] .dpng-months {
+    max-block-size: none;
+    overflow: visible;
+  }
+
+  .dpng[data-variant='modal'],
+  .dpng[data-variant='sheet'] {
+    position: static;
+    display: block;
+    padding: 0;
+  }
+}

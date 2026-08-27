@@ -1,0 +1,83 @@
+/*!
+ * datepicker-nextgen — "high-contrast" theme
+ *
+ * Built for low-vision users and for anyone who has to read a calendar on a
+ * bad projector. Every foreground/background pair clears WCAG AAA (7:1), the
+ * subtle greys are gone, borders are 2px, and hover is a solid amber block
+ * rather than a faint tint so it survives glare and colour-blindness.
+ *
+ *   <div class="dpng" data-theme="high-contrast">
+ *
+ * Tokens only — every component rule lives in styles.css.
+ */
+
+.dpng[data-theme='high-contrast'] {
+  --dpng-accent: #0000ee;
+  --dpng-accent-hover: #0000aa;
+  --dpng-accent-contrast: #ffffff;
+  --dpng-accent-soft: #d6e0ff;
+  --dpng-range-bg: #cddaff;
+  --dpng-range-text: #000000;
+  --dpng-surface: #ffffff;
+  --dpng-surface-elevated: #ffffff;
+  --dpng-text: #000000;
+  --dpng-text-muted: #000000;
+  --dpng-text-subtle: #000000;
+  --dpng-border: #000000;
+  --dpng-border-strong: #000000;
+  --dpng-hover-bg: #ffe066;
+  --dpng-disabled-text: #595959;
+  --dpng-today-color: #a30000;
+  --dpng-weekday-color: #000000;
+  --dpng-badge-bg: #0000ee;
+  --dpng-badge-text: #ffffff;
+  --dpng-blocked-color: #000000;
+  --dpng-preview-bg: #fff2bf;
+  --dpng-ring: #a30000;
+  --dpng-shadow: 0 0 0 1px #000000;
+  --dpng-card-border: #000000;
+  --dpng-backdrop: rgba(0, 0, 0, 0.72);
+  --dpng-day-text: #000000;
+  --dpng-invalid: #a30000;
+  --dpng-holiday-color: #7a0091;
+  --dpng-border-width: 2px;
+  --dpng-radius: 4px;
+  --dpng-radius-card: 6px;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dpng[data-theme='high-contrast'] {
+    --dpng-accent: #ffe066;
+    --dpng-accent-hover: #ffd12e;
+    --dpng-accent-contrast: #000000;
+    --dpng-accent-soft: #2a2a00;
+    --dpng-range-bg: #333300;
+    --dpng-range-text: #ffffff;
+    --dpng-surface: #000000;
+    --dpng-surface-elevated: #000000;
+    --dpng-text: #ffffff;
+    --dpng-text-muted: #ffffff;
+    --dpng-text-subtle: #ffffff;
+    --dpng-border: #ffffff;
+    --dpng-border-strong: #ffffff;
+    --dpng-hover-bg: #003d7a;
+    --dpng-disabled-text: #a6a6a6;
+    --dpng-today-color: #66e0ff;
+    --dpng-weekday-color: #ffffff;
+    --dpng-badge-bg: #ffe066;
+    --dpng-badge-text: #000000;
+    --dpng-blocked-color: #ffffff;
+    --dpng-preview-bg: #002b55;
+    --dpng-ring: #66e0ff;
+    --dpng-shadow: 0 0 0 1px #ffffff;
+    --dpng-card-border: #ffffff;
+    --dpng-backdrop: rgba(0, 0, 0, 0.85);
+    --dpng-day-text: #ffffff;
+    --dpng-invalid: #ff8080;
+    --dpng-holiday-color: #ff9ef0;
+
+    color-scheme: dark;
+  }
+}
