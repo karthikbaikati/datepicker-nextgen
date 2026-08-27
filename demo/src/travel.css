@@ -67,41 +67,125 @@
   --vy-shell-max: 1280px;
   --vy-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 
-  /* -- the drawn coast, bright midday -------------------------------------- */
-  --vy-sky-1: #cfeaf4;
-  --vy-sky-2: #e2f3f7;
-  --vy-sky-3: #f2fafb;
-  --vy-sky-4: #fdfefe;
-  --vy-glow-1: rgba(255, 253, 244, 0.95);
-  --vy-glow-2: rgba(214, 244, 246, 0.42);
-  --vy-glow-3: rgba(200, 238, 242, 0);
-  --vy-sun: #fffdf2;
+  /* -- the drawn coast, late tropical afternoon ---------------------------- */
+
+  /* Sky. Six stops, and the hue walks as well as the value: a real sky is a
+     strong blue overhead that pales AND warms toward the horizon, and a
+     two-stop pale wash is what makes a drawn sky look drawn. */
+  --vy-sky-1: #2b78a3;
+  --vy-sky-2: #3e92b8;
+  --vy-sky-3: #5cabca;
+  --vy-sky-4: #83c6dd;
+  --vy-sky-5: #b6dfea;
+  --vy-sky-6: #dfeff0;
+
+  /* Horizon haze — the warm air the low sun is seen through. */
+  --vy-haze-1: rgba(255, 246, 224, 0.4);
+  --vy-haze-2: rgba(255, 248, 232, 0.3);
+  --vy-haze-3: rgba(255, 250, 238, 0);
+
+  /* The sun's bloom: five stops, so it falls off the way light does rather
+     than the way a two-stop gradient does. */
+  --vy-glow-1: rgba(255, 253, 240, 0.92);
+  --vy-glow-2: rgba(255, 246, 214, 0.6);
+  --vy-glow-3: rgba(255, 236, 190, 0.32);
+  --vy-glow-4: rgba(246, 232, 194, 0.13);
+  --vy-glow-5: rgba(238, 230, 200, 0);
+
+  /* The disc itself: hot core, warm rim, and a last few percent that fades
+     out instead of stopping dead. */
+  --vy-sun-1: #fffef7;
+  --vy-sun-2: #fff7dc;
+  --vy-sun-3: rgba(255, 238, 190, 0.6);
+  --vy-sun-4: rgba(255, 234, 184, 0);
+
   --vy-star: rgba(255, 255, 255, 0);
-  --vy-cloud: rgba(255, 255, 255, 0.82);
-  --vy-gull: rgba(41, 62, 72, 0.34);
-  --vy-boat: rgba(24, 46, 56, 0.42);
-  /* Deep at the horizon, aqua by the time it reaches the shore. */
-  --vy-water-1: #0b7f92;
-  --vy-water-2: #22b8c0;
-  --vy-water-3: #8fe3da;
-  /* The four bands stack, so each one only has to add its own difference. They
-     run deep to shallow on purpose: the water lightens as the sea-bed rises. */
-  --vy-band-a: rgba(11, 127, 146, 0.16);
-  --vy-band-b: rgba(34, 184, 192, 0.18);
-  --vy-band-c: rgba(143, 227, 218, 0.26);
-  --vy-band-d: rgba(224, 249, 245, 0.46);
-  --vy-crest: rgba(255, 255, 255, 0.46);
-  --vy-crest-near: rgba(255, 255, 255, 0.66);
-  --vy-glint: rgba(255, 255, 255, 0.78);
-  --vy-foam-1: rgba(255, 255, 255, 0.86);
+  --vy-cloud: rgba(176, 199, 210, 0.72);
+  --vy-cloud-lit: rgba(255, 255, 252, 0.96);
+  --vy-gull: rgba(38, 60, 70, 0.42);
+  --vy-boat: rgba(30, 52, 62, 0.5);
+  --vy-boat-sail: rgba(255, 255, 255, 0.86);
+
+  /* Water, offshore to shore. Eight stops: a hazy strip at the very horizon,
+     then deep navy-teal, and a turn through turquoise into pale aquamarine as
+     the bottom comes up under it. Real tropical water is never one teal. */
+  --vy-water-1: #3d7a90;
+  --vy-water-2: #14647d;
+  --vy-water-3: #0a6f8a;
+  --vy-water-4: #0d8ba0;
+  --vy-water-5: #14a8ae;
+  --vy-water-6: #3ec8bd;
+  --vy-water-7: #84e0cf;
+  --vy-water-8: #c6f0e4;
+
+  /* Where the bottom is not where the gradient says it is: a reef, and the
+     sandbar inside it. */
+  --vy-reef: rgba(9, 58, 70, 0.24);
+  --vy-shoal: rgba(236, 252, 246, 0.26);
+
+  /* The four bands stack, so each one only has to add its own difference. */
+  --vy-band-a: rgba(10, 92, 120, 0.03);
+  --vy-band-b: rgba(13, 139, 160, 0.06);
+  --vy-band-c: rgba(62, 200, 189, 0.08);
+  --vy-band-d: rgba(198, 240, 228, 0.13);
+
+  /* Contrast climbs as the swell comes in — that is the whole of aerial
+     perspective, stated in four numbers. These are deliberately near the
+     floor: the crest line only has to carry a tonal edge, and the foam
+     streaks scattered along it do the work of looking like water. */
+  --vy-crest-far: rgba(255, 255, 255, 0.1);
+  --vy-crest-mid: rgba(255, 255, 255, 0.14);
+  --vy-crest: rgba(255, 255, 255, 0.12);
+  --vy-crest-near: rgba(255, 255, 255, 0.18);
+  --vy-streak-far: rgba(255, 255, 255, 0.34);
+  --vy-streak-mid: rgba(255, 255, 255, 0.46);
+  --vy-streak: rgba(255, 255, 255, 0.6);
+  --vy-streak-near: rgba(255, 255, 255, 0.82);
+
+  --vy-glint: rgba(255, 253, 240, 0.92);
+  --vy-sheen-1: rgba(255, 250, 226, 0.5);
+  --vy-sheen-2: rgba(255, 248, 226, 0.22);
+  --vy-sheen-3: rgba(255, 246, 226, 0);
+
+  /* These two carry no colour that survives: the grain filters composite
+     noise *into* their alpha, so only the ramp matters. */
+  --vy-grain-far: rgba(255, 255, 255, 0.1);
+  --vy-grain-near: rgba(255, 255, 255, 0.5);
+  --vy-grain-blend: overlay;
+  --vy-caustic-1: rgba(255, 255, 255, 0.55);
+  --vy-caustic-2: rgba(255, 255, 255, 0);
+
+  --vy-foam-1: rgba(255, 255, 255, 0.88);
   --vy-foam-2: rgba(255, 255, 255, 0);
-  --vy-lace: rgba(255, 255, 255, 0.8);
-  --vy-sand-wet: #e4e7e4;
-  --vy-sand-dry: #f7f5ef;
-  --vy-sand-mark: rgba(120, 130, 128, 0.22);
-  --vy-frond: #24685c;
-  --vy-frond-opacity: 0.44;
-  --vy-arc: rgba(7, 126, 139, 0.5);
+  --vy-lace: rgba(255, 255, 255, 0.82);
+  --vy-bubble: #ffffff;
+  --vy-sheen-wet: rgba(255, 255, 255, 0.9);
+
+  /* Wet sand is darker and more saturated than dry, and it mirrors the sky —
+     which is most of the reason it reads as wet at all. */
+  --vy-wetsky-1: rgba(150, 196, 210, 0.55);
+  --vy-wetsky-2: rgba(170, 200, 208, 0);
+  --vy-sand-wet: #cfcdc2;
+  --vy-sand-dry: #f4efe2;
+  --vy-sand-mark: rgba(150, 142, 124, 0.42);
+  --vy-sand-shadow: rgba(96, 92, 78, 0.34);
+  --vy-sand-ripple: rgba(255, 255, 255, 0.3);
+
+  /* A frond against a bright sky is a near-silhouette with the sunward
+     leaflets glowing through, so it gets two gradients, not one fill. */
+  --vy-frond-1: #0f2b25;
+  --vy-frond-2: #17392f;
+  --vy-frond-3: #2c5a44;
+  --vy-frond-4: #2a5a41;
+  --vy-frond-5: #3e7a52;
+  --vy-frond-6: #6aa96c;
+  --vy-frond-rib: #0d2620;
+  --vy-frond-opacity: 0.88;
+
+  /* A jet and the trail it left, in place of a drawn dotted route line. */
+  --vy-trail-1: rgba(255, 255, 255, 0.5);
+  --vy-trail-2: rgba(255, 255, 255, 0);
+  --vy-arc: rgba(60, 84, 96, 0.5);
 
   /* Scrim over the scene, so the hero copy always clears AA. */
   --vy-scrim-1: rgba(249, 251, 252, 0.95);
@@ -109,23 +193,58 @@
   --vy-scrim-3: rgba(249, 251, 252, 0);
 
   /* -- the listing illustration ------------------------------------------ */
-  --vy-stay-sky-1: #d7eef5;
-  --vy-stay-sky-2: #f0fafb;
-  --vy-stay-sun: #fffdf0;
-  --vy-stay-far: #a8cbd0;
-  --vy-stay-sea-1: #12909e;
-  --vy-stay-sea-2: #93e6dc;
-  --vy-stay-swell: rgba(255, 255, 255, 0.16);
-  --vy-stay-roof: #7fa6ae;
-  --vy-stay-wall: #ffffff;
-  --vy-stay-deck: #dcd3c4;
-  --vy-stay-post: #b9ae9c;
-  --vy-stay-ink: #7d8f92;
-  --vy-stay-glass: #cbe8ec;
-  --vy-stay-door: #6f8f95;
-  --vy-stay-lamp: #f0a94f;
-  --vy-stay-reflect: rgba(255, 255, 255, 0.2);
-  --vy-stay-glint: rgba(255, 236, 196, 0.6);
+  /* Same treatment at a sixth of the scale: graded sky, graded lagoon, thatch
+     that is straw rather than grey, and glass that is a reflection. */
+  --vy-stay-sky-1: #3a8cb2;
+  --vy-stay-sky-2: #63aecb;
+  --vy-stay-sky-3: #93cbdf;
+  --vy-stay-sky-4: #c4e2ea;
+  --vy-stay-sky-5: #e6f1ec;
+  --vy-stay-haze-1: rgba(255, 248, 232, 0);
+  --vy-stay-haze-2: rgba(255, 246, 224, 0.52);
+  --vy-stay-glow-1: rgba(255, 252, 236, 0.8);
+  --vy-stay-glow-2: rgba(255, 242, 206, 0.28);
+  --vy-stay-glow-3: rgba(250, 236, 200, 0);
+  --vy-stay-sun-1: #fffef6;
+  --vy-stay-sun-2: #fff5d6;
+  --vy-stay-sun-3: rgba(255, 240, 196, 0);
+  --vy-stay-far: #9fc3ce;
+  --vy-stay-sea-1: #7fb4c2;
+  --vy-stay-sea-2: #0d6480;
+  --vy-stay-sea-3: #0e8497;
+  --vy-stay-sea-4: #19adb0;
+  --vy-stay-sea-5: #5fd2c4;
+  --vy-stay-sea-6: #b5ecdf;
+  --vy-stay-sandbar: rgba(230, 250, 244, 0.36);
+  --vy-stay-swell: rgba(255, 255, 255, 0.07);
+  --vy-stay-swellcrest: rgba(255, 255, 255, 0.34);
+  --vy-stay-glint: rgba(255, 252, 238, 0.86);
+  --vy-stay-shadow: rgba(16, 58, 68, 0.4);
+  --vy-stay-roof-1: #d9c79f;
+  --vy-stay-roof-2: #b8a077;
+  --vy-stay-roof-3: #8a7350;
+  --vy-stay-thatch: #6d5a3c;
+  --vy-stay-eave: #5d4c33;
+  --vy-stay-eaveshadow: rgba(60, 48, 32, 0.3);
+  --vy-stay-wall-1: #fdfbf5;
+  --vy-stay-wall-2: #d9d5c8;
+  --vy-stay-walldark: rgba(112, 106, 88, 0.34);
+  --vy-stay-deck: #d8c9ac;
+  --vy-stay-plank: rgba(120, 100, 70, 0.3);
+  --vy-stay-fascia: #a8926d;
+  --vy-stay-post-1: #d3bf9c;
+  --vy-stay-post-2: #6f5f43;
+  --vy-stay-post-3: #9a8460;
+  --vy-stay-wetpost: rgba(48, 62, 58, 0.42);
+  --vy-stay-ring: rgba(255, 255, 255, 0.4);
+  --vy-stay-glass-1: #cfe8f0;
+  --vy-stay-glass-2: #8fbfd2;
+  --vy-stay-glass-3: #3d5f6b;
+  --vy-stay-spec: rgba(255, 255, 255, 0.4);
+  --vy-stay-mullion: rgba(70, 66, 54, 0.45);
+  --vy-stay-lamp: #f5b45c;
+  --vy-stay-lampglow: rgba(245, 180, 92, 0.5);
+  --vy-stay-reflect: rgba(112, 92, 62, 0.7);
 }
 
 :root[data-appearance='dark'] {
@@ -155,59 +274,160 @@
   --vy-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 20px -12px rgba(0, 0, 0, 0.7);
   --vy-shadow: 0 1px 2px rgba(0, 0, 0, 0.55), 0 30px 60px -30px rgba(0, 0, 0, 0.85);
 
-  --vy-sky-1: #04141d;
-  --vy-sky-2: #072430;
-  --vy-sky-3: #0d3a48;
-  --vy-sky-4: #17505c;
-  --vy-glow-1: rgba(214, 240, 244, 0.4);
-  --vy-glow-2: rgba(140, 200, 210, 0.16);
-  --vy-glow-3: rgba(120, 180, 200, 0);
-  --vy-sun: #e7f4f6;
-  --vy-star: rgba(226, 240, 246, 0.8);
-  --vy-cloud: rgba(120, 160, 176, 0.2);
-  --vy-gull: rgba(190, 220, 230, 0.3);
-  --vy-boat: rgba(200, 228, 236, 0.34);
-  --vy-water-1: #04161f;
-  --vy-water-2: #0a2c3a;
-  --vy-water-3: #10404f;
-  --vy-band-a: rgba(120, 190, 210, 0.08);
-  --vy-band-b: rgba(120, 190, 210, 0.11);
-  --vy-band-c: rgba(130, 200, 218, 0.14);
-  --vy-band-d: rgba(150, 214, 228, 0.17);
-  --vy-crest: rgba(196, 232, 242, 0.24);
-  --vy-crest-near: rgba(210, 240, 248, 0.36);
-  --vy-glint: rgba(226, 244, 248, 0.5);
-  --vy-foam-1: rgba(190, 226, 236, 0.32);
-  --vy-foam-2: rgba(190, 226, 236, 0);
-  --vy-lace: rgba(206, 236, 244, 0.4);
-  --vy-sand-wet: #123039;
-  --vy-sand-dry: #0d2733;
-  --vy-sand-mark: rgba(180, 214, 224, 0.16);
-  --vy-frond: #051820;
-  --vy-frond-opacity: 0.82;
-  --vy-arc: rgba(196, 226, 240, 0.4);
+  /* Moonlight on the same coast: everything cooler, everything lower in
+     contrast, and the glitter path now comes off the moon. */
+  --vy-sky-1: #030d16;
+  --vy-sky-2: #061a26;
+  --vy-sky-3: #0a2b3a;
+  --vy-sky-4: #103d4e;
+  --vy-sky-5: #17505f;
+  --vy-sky-6: #1d6070;
+
+  --vy-haze-1: rgba(150, 196, 214, 0.22);
+  --vy-haze-2: rgba(140, 186, 206, 0.1);
+  --vy-haze-3: rgba(130, 180, 200, 0);
+
+  --vy-glow-1: rgba(226, 244, 250, 0.5);
+  --vy-glow-2: rgba(196, 228, 240, 0.24);
+  --vy-glow-3: rgba(160, 206, 224, 0.11);
+  --vy-glow-4: rgba(130, 184, 206, 0.05);
+  --vy-glow-5: rgba(110, 168, 194, 0);
+
+  --vy-sun-1: #f2fbfd;
+  --vy-sun-2: #dceff5;
+  --vy-sun-3: rgba(200, 232, 242, 0.5);
+  --vy-sun-4: rgba(190, 226, 240, 0);
+
+  --vy-star: rgba(232, 244, 250, 0.95);
+  --vy-cloud: rgba(74, 106, 124, 0.36);
+  --vy-cloud-lit: rgba(122, 158, 178, 0.42);
+  --vy-gull: rgba(176, 206, 218, 0.26);
+  --vy-boat: rgba(150, 186, 200, 0.34);
+  --vy-boat-sail: rgba(206, 232, 242, 0.4);
+
+  --vy-water-1: #29505e;
+  --vy-water-2: #061c26;
+  --vy-water-3: #051d28;
+  --vy-water-4: #082a38;
+  --vy-water-5: #0c3a4a;
+  --vy-water-6: #0e4050;
+  --vy-water-7: #134f5f;
+  --vy-water-8: #1a6070;
+
+  --vy-reef: rgba(0, 10, 16, 0.34);
+  --vy-shoal: rgba(120, 190, 208, 0.07);
+
+  --vy-band-a: rgba(110, 180, 202, 0.05);
+  --vy-band-b: rgba(116, 186, 206, 0.07);
+  --vy-band-c: rgba(126, 196, 214, 0.09);
+  --vy-band-d: rgba(146, 212, 226, 0.12);
+
+  --vy-crest-far: rgba(190, 226, 238, 0.06);
+  --vy-crest-mid: rgba(196, 232, 242, 0.09);
+  --vy-crest: rgba(202, 236, 246, 0.13);
+  --vy-crest-near: rgba(212, 242, 250, 0.2);
+  --vy-streak-far: rgba(196, 230, 242, 0.16);
+  --vy-streak-mid: rgba(200, 234, 244, 0.22);
+  --vy-streak: rgba(210, 238, 248, 0.3);
+  --vy-streak-near: rgba(222, 244, 250, 0.42);
+
+  --vy-glint: rgba(226, 244, 250, 0.62);
+  --vy-sheen-1: rgba(200, 232, 244, 0.22);
+  --vy-sheen-2: rgba(190, 226, 240, 0.1);
+  --vy-sheen-3: rgba(180, 220, 236, 0);
+
+  /* Grain lifts rather than overlays at night: an overlay blend against a
+     near-black sea just turns to mud. */
+  --vy-grain-far: rgba(255, 255, 255, 0.06);
+  --vy-grain-near: rgba(255, 255, 255, 0.22);
+  --vy-grain-blend: soft-light;
+  --vy-caustic-1: rgba(255, 255, 255, 0.18);
+  --vy-caustic-2: rgba(255, 255, 255, 0);
+
+  --vy-foam-1: rgba(198, 230, 240, 0.3);
+  --vy-foam-2: rgba(198, 230, 240, 0);
+  --vy-lace: rgba(206, 236, 244, 0.44);
+  --vy-bubble: #d6eef6;
+  --vy-sheen-wet: rgba(214, 240, 248, 0.42);
+
+  --vy-wetsky-1: rgba(60, 110, 130, 0.5);
+  --vy-wetsky-2: rgba(60, 110, 130, 0);
+  --vy-sand-wet: #0e2a34;
+  --vy-sand-dry: #12303b;
+  --vy-sand-mark: rgba(150, 190, 204, 0.2);
+  --vy-sand-shadow: rgba(0, 0, 0, 0.4);
+  --vy-sand-ripple: rgba(180, 216, 230, 0.14);
+
+  --vy-frond-1: #020a0e;
+  --vy-frond-2: #04131a;
+  --vy-frond-3: #0a232c;
+  --vy-frond-4: #061821;
+  --vy-frond-5: #0b2733;
+  --vy-frond-6: #143b48;
+  --vy-frond-rib: #010709;
+  --vy-frond-opacity: 0.95;
+
+  --vy-trail-1: rgba(200, 228, 240, 0.2);
+  --vy-trail-2: rgba(200, 228, 240, 0);
+  --vy-arc: rgba(190, 220, 236, 0.4);
 
   --vy-scrim-1: rgba(7, 32, 43, 0.93);
   --vy-scrim-2: rgba(7, 32, 43, 0.62);
   --vy-scrim-3: rgba(7, 32, 43, 0);
 
-  --vy-stay-sky-1: #0a2431;
-  --vy-stay-sky-2: #1d4453;
-  --vy-stay-sun: #dfeff2;
-  --vy-stay-far: #12303c;
-  --vy-stay-sea-1: #071f29;
-  --vy-stay-sea-2: #10404e;
-  --vy-stay-swell: rgba(160, 210, 224, 0.08);
-  --vy-stay-roof: #23343a;
-  --vy-stay-wall: #1b3a46;
-  --vy-stay-deck: #2a4450;
-  --vy-stay-post: #16303b;
-  --vy-stay-ink: #7fa0ad;
-  --vy-stay-glass: #2f6272;
-  --vy-stay-door: #24444f;
-  --vy-stay-lamp: #f2a463;
-  --vy-stay-reflect: rgba(190, 226, 238, 0.12);
-  --vy-stay-glint: rgba(214, 240, 246, 0.28);
+  /* At night the bungalow is lit from inside, so the glass stops reflecting
+     the sky and starts being the brightest thing in the frame — and the
+     reflection on the water carries that warmth down with it. */
+  --vy-stay-sky-1: #061924;
+  --vy-stay-sky-2: #0c2c3a;
+  --vy-stay-sky-3: #134152;
+  --vy-stay-sky-4: #1b5567;
+  --vy-stay-sky-5: #256777;
+  --vy-stay-haze-1: rgba(150, 196, 214, 0);
+  --vy-stay-haze-2: rgba(150, 196, 214, 0.16);
+  --vy-stay-glow-1: rgba(224, 242, 248, 0.42);
+  --vy-stay-glow-2: rgba(180, 216, 232, 0.14);
+  --vy-stay-glow-3: rgba(150, 196, 216, 0);
+  --vy-stay-sun-1: #eef8fb;
+  --vy-stay-sun-2: #cfe6ee;
+  --vy-stay-sun-3: rgba(190, 224, 236, 0);
+  --vy-stay-far: #0d2a35;
+  --vy-stay-sea-1: #27515f;
+  --vy-stay-sea-2: #04141d;
+  --vy-stay-sea-3: #072230;
+  --vy-stay-sea-4: #0b3242;
+  --vy-stay-sea-5: #104554;
+  --vy-stay-sea-6: #175a68;
+  --vy-stay-sandbar: rgba(130, 196, 212, 0.07);
+  --vy-stay-swell: rgba(160, 210, 224, 0.05);
+  --vy-stay-swellcrest: rgba(190, 226, 240, 0.2);
+  --vy-stay-glint: rgba(216, 240, 248, 0.5);
+  --vy-stay-shadow: rgba(0, 0, 0, 0.5);
+  --vy-stay-roof-1: #4a4436;
+  --vy-stay-roof-2: #332f26;
+  --vy-stay-roof-3: #211e18;
+  --vy-stay-thatch: #161410;
+  --vy-stay-eave: #100f0c;
+  --vy-stay-eaveshadow: rgba(0, 0, 0, 0.4);
+  --vy-stay-wall-1: #2b4c58;
+  --vy-stay-wall-2: #173540;
+  --vy-stay-walldark: rgba(0, 0, 0, 0.34);
+  --vy-stay-deck: #223841;
+  --vy-stay-plank: rgba(0, 0, 0, 0.34);
+  --vy-stay-fascia: #15272e;
+  --vy-stay-post-1: #3b5560;
+  --vy-stay-post-2: #0d1f27;
+  --vy-stay-post-3: #213b45;
+  --vy-stay-wetpost: rgba(0, 0, 0, 0.44);
+  --vy-stay-ring: rgba(190, 226, 240, 0.2);
+  --vy-stay-glass-1: #f6c98a;
+  --vy-stay-glass-2: #e0a860;
+  --vy-stay-glass-3: #6d4b28;
+  --vy-stay-spec: rgba(255, 236, 200, 0.28);
+  --vy-stay-mullion: rgba(20, 16, 10, 0.55);
+  --vy-stay-lamp: #f8bd6e;
+  --vy-stay-lampglow: rgba(248, 189, 110, 0.4);
+  --vy-stay-reflect: rgba(226, 176, 104, 0.44);
 }
 
 /* The developer half inherits the same palette, so the page reads as one site. */
@@ -995,7 +1215,15 @@ body {
  * The scene carries no colour attributes at all: every shape takes its fill
  * from a token, which is what lets one copy of the markup be both a late
  * afternoon and a moonlit night.
+ *
+ * One consequence worth knowing before editing: anything the markup paints
+ * with `fill="url(#…)"` — the sky, the water, the grain ramps, the thatch —
+ * must NOT be given a `fill` here. A CSS declaration beats an SVG presentation
+ * attribute, so a stray `fill:` in this block silently flattens a gradient
+ * back into the single colour the rebuild was meant to get rid of.
  */
+
+/* -- gradient stops ------------------------------------------------------- */
 
 .vy-stop-sky-1 {
   stop-color: var(--vy-sky-1);
@@ -1009,6 +1237,21 @@ body {
 .vy-stop-sky-4 {
   stop-color: var(--vy-sky-4);
 }
+.vy-stop-sky-5 {
+  stop-color: var(--vy-sky-5);
+}
+.vy-stop-sky-6 {
+  stop-color: var(--vy-sky-6);
+}
+.vy-stop-haze-1 {
+  stop-color: var(--vy-haze-1);
+}
+.vy-stop-haze-2 {
+  stop-color: var(--vy-haze-2);
+}
+.vy-stop-haze-3 {
+  stop-color: var(--vy-haze-3);
+}
 .vy-stop-glow-1 {
   stop-color: var(--vy-glow-1);
 }
@@ -1017,6 +1260,24 @@ body {
 }
 .vy-stop-glow-3 {
   stop-color: var(--vy-glow-3);
+}
+.vy-stop-glow-4 {
+  stop-color: var(--vy-glow-4);
+}
+.vy-stop-glow-5 {
+  stop-color: var(--vy-glow-5);
+}
+.vy-stop-sun-1 {
+  stop-color: var(--vy-sun-1);
+}
+.vy-stop-sun-2 {
+  stop-color: var(--vy-sun-2);
+}
+.vy-stop-sun-3 {
+  stop-color: var(--vy-sun-3);
+}
+.vy-stop-sun-4 {
+  stop-color: var(--vy-sun-4);
 }
 .vy-stop-water-1 {
   stop-color: var(--vy-water-1);
@@ -1027,37 +1288,167 @@ body {
 .vy-stop-water-3 {
   stop-color: var(--vy-water-3);
 }
+.vy-stop-water-4 {
+  stop-color: var(--vy-water-4);
+}
+.vy-stop-water-5 {
+  stop-color: var(--vy-water-5);
+}
+.vy-stop-water-6 {
+  stop-color: var(--vy-water-6);
+}
+.vy-stop-water-7 {
+  stop-color: var(--vy-water-7);
+}
+.vy-stop-water-8 {
+  stop-color: var(--vy-water-8);
+}
+.vy-stop-sheen-1 {
+  stop-color: var(--vy-sheen-1);
+}
+.vy-stop-sheen-2 {
+  stop-color: var(--vy-sheen-2);
+}
+.vy-stop-sheen-3 {
+  stop-color: var(--vy-sheen-3);
+}
+.vy-stop-grain-far {
+  stop-color: var(--vy-grain-far);
+}
+.vy-stop-grain-near {
+  stop-color: var(--vy-grain-near);
+}
+.vy-stop-caustic-1 {
+  stop-color: var(--vy-caustic-1);
+}
+.vy-stop-caustic-2 {
+  stop-color: var(--vy-caustic-2);
+}
 .vy-stop-foam-1 {
   stop-color: var(--vy-foam-1);
 }
 .vy-stop-foam-2 {
   stop-color: var(--vy-foam-2);
 }
-
-.vy-scene__sun {
-  fill: var(--vy-sun);
+.vy-stop-wetsky-1 {
+  stop-color: var(--vy-wetsky-1);
 }
+.vy-stop-wetsky-2 {
+  stop-color: var(--vy-wetsky-2);
+}
+.vy-stop-frond-1 {
+  stop-color: var(--vy-frond-1);
+}
+.vy-stop-frond-2 {
+  stop-color: var(--vy-frond-2);
+}
+.vy-stop-frond-3 {
+  stop-color: var(--vy-frond-3);
+}
+.vy-stop-frond-4 {
+  stop-color: var(--vy-frond-4);
+}
+.vy-stop-frond-5 {
+  stop-color: var(--vy-frond-5);
+}
+.vy-stop-frond-6 {
+  stop-color: var(--vy-frond-6);
+}
+.vy-stop-trail-1 {
+  stop-color: var(--vy-trail-1);
+}
+.vy-stop-trail-2 {
+  stop-color: var(--vy-trail-2);
+}
+
+/* -- sky ------------------------------------------------------------------ */
 
 .vy-scene__stars circle {
   fill: var(--vy-star);
 }
 
+/* Cumulus over an evening sea: a shaded body with a lit rim on top, both
+   chewed up by the same displacement filter so neither edge is an arc. */
 .vy-scene__cloud {
   fill: var(--vy-cloud);
 }
 
+.vy-scene__cloud--lit {
+  fill: var(--vy-cloud-lit);
+}
+
 .vy-scene__gull {
   stroke: var(--vy-gull);
-  stroke-width: 2;
+  stroke-width: 1.8;
   stroke-linecap: round;
 }
 
-.vy-scene__boat path {
+/* A contrail, not a dotted route line: the stroke paint is a gradient set on
+   the element, so this rule must not name a colour. */
+.vy-scene__arc {
+  stroke-width: 3.2;
+  stroke-linecap: round;
+}
+
+.vy-scene__jet {
+  fill: var(--vy-arc);
+}
+
+/* -- water ---------------------------------------------------------------- */
+
+/* Isolated so the grain and caustic blends stay inside the scene. */
+.vy-scene__sea {
+  isolation: isolate;
+}
+
+.vy-scene__reef {
+  fill: var(--vy-reef);
+}
+
+/* Coral heads: the reef is a broken run of blotches with clear sand showing
+   between them, never an even stripe of darker water. */
+.vy-scene__reefheads ellipse {
+  fill: var(--vy-reef);
+}
+
+.vy-scene__shoal {
+  fill: var(--vy-shoal);
+}
+
+.vy-scene__shoalpatches ellipse {
+  fill: var(--vy-shoal);
+}
+
+/* Surface texture. `overlay` by day so the noise darkens and lightens the
+   water at once; `soft-light` at night, where an overlay against near-black
+   water only produces mud. */
+.vy-scene__grain {
+  mix-blend-mode: var(--vy-grain-blend);
+  opacity: 0.2;
+}
+
+/* The light the ripples focus onto the sand in the shallows. */
+.vy-scene__caustic {
+  mix-blend-mode: screen;
+  opacity: 0.22;
+}
+
+/* The diffuse column beneath the facets: the scattered light that never
+   resolves into a single glint. */
+.vy-scene__sheen {
+  opacity: 0.6;
+}
+
+.vy-scene__hull {
   fill: var(--vy-boat);
 }
 
-/* Four bands of water. Each is translucent, so where they overlap the colour
-   deepens on its own — no fifth tone to keep in sync. */
+.vy-scene__sail {
+  fill: var(--vy-boat-sail);
+}
+
+/* Four bands, each translucent, so where they overlap the colour deepens on
+   its own — no fifth tone to keep in sync. */
 .vy-scene__band--a {
   fill: var(--vy-band-a);
 }
@@ -1071,27 +1462,55 @@ body {
   fill: var(--vy-band-d);
 }
 
+/* Aerial perspective in four lines: contrast and weight both climb as the
+   swell comes in, and the two farthest crests are blurred in the markup. */
 .vy-scene__crest {
   stroke: var(--vy-crest);
   stroke-width: 2;
   stroke-linecap: round;
 }
 
+.vy-scene__crest--far {
+  stroke: var(--vy-crest-far);
+  stroke-width: 1.2;
+}
+
+.vy-scene__crest--mid {
+  stroke: var(--vy-crest-mid);
+  stroke-width: 1.6;
+}
+
 .vy-scene__crest--near {
   stroke: var(--vy-crest-near);
-  stroke-width: 2.6;
+  stroke-width: 2.8;
+}
+
+/* Short foam streaks lying along each swell. Stroke width and opacity come
+   from the markup, per streak — a uniform set of these would be no better
+   than the ruled line they replace. */
+.vy-scene__streaks path {
+  fill: none;
+  stroke: var(--vy-streak);
+  stroke-linecap: round;
+}
+
+.vy-scene__streaks--far path {
+  stroke: var(--vy-streak-far);
+}
+
+.vy-scene__streaks--mid path {
+  stroke: var(--vy-streak-mid);
+}
+
+.vy-scene__streaks--near path {
+  stroke: var(--vy-streak-near);
 }
 
 .vy-scene__glints ellipse {
   fill: var(--vy-glint);
 }
 
-.vy-scene__lace {
-  stroke: var(--vy-lace);
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-dasharray: 2 11 22 8 5 15;
-}
+/* -- shore ---------------------------------------------------------------- */
 
 .vy-scene__wet {
   fill: var(--vy-sand-wet);
@@ -1101,38 +1520,73 @@ body {
   fill: var(--vy-sand-dry);
 }
 
+.vy-scene__sandgrain {
+  mix-blend-mode: var(--vy-grain-blend);
+  opacity: 0.2;
+}
+
+/* Ripple marks left in wet sand by the last few waves. */
+.vy-scene__ripple {
+  stroke: var(--vy-sand-ripple);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+
+/* The specular line right on the waterline — the single brightest thing on
+   the beach, and the reason wet sand reads as wet. */
+.vy-scene__sheenline {
+  stroke: var(--vy-sheen-wet);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.vy-scene__lace {
+  stroke: var(--vy-lace);
+  stroke-width: 3.4;
+  stroke-linecap: round;
+  stroke-dasharray: 2 11 22 8 5 15;
+}
+
+.vy-scene__bubbles circle {
+  fill: var(--vy-bubble);
+}
+
 .vy-scene__marks ellipse {
   fill: var(--vy-sand-mark);
 }
 
-.vy-scene__arc {
-  stroke: var(--vy-arc);
-  stroke-width: 2;
-  stroke-dasharray: 7 9;
-  stroke-linecap: round;
+/* Higher specificity than the rule above it, on purpose: the shadow ellipse
+   is a descendant of `.vy-scene__marks` too. */
+.vy-scene__marks .vy-scene__markshadow {
+  fill: var(--vy-sand-shadow);
 }
 
-.vy-scene__plane path {
-  fill: var(--vy-arc);
-}
-
-.vy-scene__pin {
-  fill: var(--vy-arc);
-}
+/* -- fronds --------------------------------------------------------------- */
 
 /* Fronds frame the corners; they are never allowed to become the subject. */
 .vy-frond {
   opacity: var(--vy-frond-opacity);
 }
 
+/* The far one sits deeper in the haze. */
+.vy-frond--dim {
+  opacity: calc(var(--vy-frond-opacity) * 0.72);
+}
+
 .vy-frond__rib {
-  stroke: var(--vy-frond);
-  stroke-width: 3.5;
+  stroke: var(--vy-frond-rib);
+  stroke-width: 3.2;
   stroke-linecap: round;
 }
 
+/* Dark at the rib, translucent at the tip. The sunward leaflets take the
+   second gradient: a frond against a bright sky glows through on that side. */
 .vy-frond__leaf {
-  fill: var(--vy-frond);
+  fill: url(#vy-g-frond);
+}
+
+.vy-frond__leaf--lit {
+  fill: url(#vy-g-frondlit);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1177,24 +1631,26 @@ body {
     transform: translate3d(0, calc(var(--vy-scroll, 0) * 22px), 0);
   }
 
+  /* Everything below is deliberately at the threshold of perception. Cloud
+     drift you can actually see reads as an animation; cloud drift you only
+     notice if you stare reads as weather. The whole budget for this scene is
+     about a pixel a second. */
   .vy-scene__drift--a {
-    animation: vy-drift 84s linear infinite;
+    animation: vy-drift 210s linear infinite;
   }
 
   .vy-scene__drift--b {
-    animation: vy-drift 118s linear infinite reverse;
+    animation: vy-drift 290s linear infinite reverse;
   }
 
-  .vy-scene__arc {
-    animation: vy-dash 26s linear infinite;
-  }
-
+  /* The sun's reflection does not move — it just breathes, the way the eye
+     reads a shimmering surface it cannot resolve. */
   .vy-scene__glints {
-    animation: vy-breathe 9s ease-in-out infinite;
+    animation: vy-breathe 13s ease-in-out infinite;
   }
 
   .vy-scene__lace {
-    animation: vy-wash 14s ease-in-out infinite;
+    animation: vy-wash 19s ease-in-out infinite;
   }
 
   .vy-hero__hint {
@@ -1204,23 +1660,17 @@ body {
 
 @keyframes vy-drift {
   from {
-    transform: translateX(-3%);
+    transform: translateX(-1.2%);
   }
   to {
-    transform: translateX(3%);
-  }
-}
-
-@keyframes vy-dash {
-  to {
-    stroke-dashoffset: -320;
+    transform: translateX(1.2%);
   }
 }
 
 @keyframes vy-breathe {
   0%,
   100% {
-    opacity: 0.72;
+    opacity: 0.88;
   }
   50% {
     opacity: 1;
@@ -1232,10 +1682,10 @@ body {
   0%,
   100% {
     transform: translateY(0);
-    opacity: 0.75;
+    opacity: 0.82;
   }
   50% {
-    transform: translateY(-7px);
+    transform: translateY(-3px);
     opacity: 1;
   }
 }
@@ -1254,12 +1704,21 @@ body {
 /*  The picker frame                                                          */
 /* ========================================================================== */
 
+/* The picker root is a block box with no intrinsic width, so as a *flex item* it
+   shrink-to-fits and the day grid collapses into slivers. A grid track with
+   `justify-items: center` gives it the full line to size against while still
+   centring the card. */
 .vy-pickerframe {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
   padding: 0.35rem;
   min-inline-size: 0;
   overflow-x: auto;
+}
+
+.vy-pickerframe > * {
+  inline-size: 100%;
 }
 
 /* ========================================================================== */
@@ -1448,12 +1907,51 @@ body {
   color: var(--vy-ink-3);
 }
 
-/* the drawn overwater bungalow */
+/*
+ * The drawn overwater bungalow.
+ *
+ * Same rule as the coast: anything the markup paints with `fill="url(#…)"`
+ * — sky, sea, thatch, posts, walls, glass — must not be given a `fill` here,
+ * or the CSS wins and the gradient collapses back to a flat swatch.
+ */
 .vy-stop-stay-sky-1 {
   stop-color: var(--vy-stay-sky-1);
 }
 .vy-stop-stay-sky-2 {
   stop-color: var(--vy-stay-sky-2);
+}
+.vy-stop-stay-sky-3 {
+  stop-color: var(--vy-stay-sky-3);
+}
+.vy-stop-stay-sky-4 {
+  stop-color: var(--vy-stay-sky-4);
+}
+.vy-stop-stay-sky-5 {
+  stop-color: var(--vy-stay-sky-5);
+}
+.vy-stop-stay-haze-1 {
+  stop-color: var(--vy-stay-haze-1);
+}
+.vy-stop-stay-haze-2 {
+  stop-color: var(--vy-stay-haze-2);
+}
+.vy-stop-stay-glow-1 {
+  stop-color: var(--vy-stay-glow-1);
+}
+.vy-stop-stay-glow-2 {
+  stop-color: var(--vy-stay-glow-2);
+}
+.vy-stop-stay-glow-3 {
+  stop-color: var(--vy-stay-glow-3);
+}
+.vy-stop-stay-sun-1 {
+  stop-color: var(--vy-stay-sun-1);
+}
+.vy-stop-stay-sun-2 {
+  stop-color: var(--vy-stay-sun-2);
+}
+.vy-stop-stay-sun-3 {
+  stop-color: var(--vy-stay-sun-3);
 }
 .vy-stop-stay-sea-1 {
   stop-color: var(--vy-stay-sea-1);
@@ -1461,69 +1959,195 @@ body {
 .vy-stop-stay-sea-2 {
   stop-color: var(--vy-stay-sea-2);
 }
-.vy-stayart__sun {
-  fill: var(--vy-stay-sun);
+.vy-stop-stay-sea-3 {
+  stop-color: var(--vy-stay-sea-3);
 }
+.vy-stop-stay-sea-4 {
+  stop-color: var(--vy-stay-sea-4);
+}
+.vy-stop-stay-sea-5 {
+  stop-color: var(--vy-stay-sea-5);
+}
+.vy-stop-stay-sea-6 {
+  stop-color: var(--vy-stay-sea-6);
+}
+.vy-stop-stay-roof-1 {
+  stop-color: var(--vy-stay-roof-1);
+}
+.vy-stop-stay-roof-2 {
+  stop-color: var(--vy-stay-roof-2);
+}
+.vy-stop-stay-roof-3 {
+  stop-color: var(--vy-stay-roof-3);
+}
+.vy-stop-stay-post-1 {
+  stop-color: var(--vy-stay-post-1);
+}
+.vy-stop-stay-post-2 {
+  stop-color: var(--vy-stay-post-2);
+}
+.vy-stop-stay-post-3 {
+  stop-color: var(--vy-stay-post-3);
+}
+.vy-stop-stay-wall-1 {
+  stop-color: var(--vy-stay-wall-1);
+}
+.vy-stop-stay-wall-2 {
+  stop-color: var(--vy-stay-wall-2);
+}
+.vy-stop-stay-glass-1 {
+  stop-color: var(--vy-stay-glass-1);
+}
+.vy-stop-stay-glass-2 {
+  stop-color: var(--vy-stay-glass-2);
+}
+.vy-stop-stay-glass-3 {
+  stop-color: var(--vy-stay-glass-3);
+}
+
+.vy-stayart__sea {
+  isolation: isolate;
+}
+
+/* The headland is lighter, flatter and out of focus in the markup: aerial
+   perspective, at a sixth of the scale of the hero. */
 .vy-stayart__far {
   fill: var(--vy-stay-far);
 }
+
+.vy-stayart__sandbar {
+  fill: var(--vy-stay-sandbar);
+}
+
+.vy-stayart__grain {
+  mix-blend-mode: var(--vy-grain-blend);
+  opacity: 0.16;
+}
+
 .vy-stayart__swell {
   fill: var(--vy-stay-swell);
 }
-.vy-stayart__roof {
-  fill: var(--vy-stay-roof);
+
+.vy-stayart__swellcrest {
+  stroke: var(--vy-stay-swellcrest);
+  stroke-width: 0.9;
+  stroke-linecap: round;
 }
-.vy-stayart__thatch path {
+
+.vy-stayart__glints ellipse {
+  fill: var(--vy-stay-glint);
+}
+
+/* The whole structure drops one soft shadow on the water. */
+.vy-stayart__shadow {
+  fill: var(--vy-stay-shadow);
+  opacity: 0.5;
+}
+
+/* -- the structure -------------------------------------------------------- */
+
+.vy-stayart__wetpost {
+  fill: var(--vy-stay-wetpost);
+}
+
+/* The ripple each post makes where it enters the water. */
+.vy-stayart__ring {
+  stroke: var(--vy-stay-ring);
+  stroke-width: 0.8;
+}
+
+.vy-stayart__ladder path {
   fill: none;
-  stroke: var(--vy-stay-ink);
-  stroke-width: 1.2;
-  opacity: 0.4;
+  stroke: var(--vy-stay-post-3);
+  stroke-width: 2.2;
+  stroke-linecap: round;
 }
-.vy-stayart__wall {
-  fill: var(--vy-stay-wall);
-}
+
 .vy-stayart__deck {
   fill: var(--vy-stay-deck);
 }
-.vy-stayart__deckedge {
-  fill: var(--vy-stay-post);
-}
-.vy-stayart__posts path,
-.vy-stayart__ladder path {
+
+.vy-stayart__planks path {
   fill: none;
-  stroke: var(--vy-stay-post);
-  stroke-width: 3.2;
-  stroke-linecap: round;
+  stroke: var(--vy-stay-plank);
+  stroke-width: 0.7;
 }
-.vy-stayart__ladder path {
-  stroke-width: 2.4;
+
+.vy-stayart__fascia {
+  fill: var(--vy-stay-fascia);
 }
+
 .vy-stayart__rail path {
   fill: none;
-  stroke: var(--vy-stay-post);
-  stroke-width: 2;
+  stroke: var(--vy-stay-post-3);
+  stroke-width: 1.8;
   stroke-linecap: round;
 }
-.vy-stayart__door {
-  fill: var(--vy-stay-door);
+
+/* The end of the volume, turning away from the light. */
+.vy-stayart__walldark {
+  fill: var(--vy-stay-walldark);
 }
-.vy-stayart__window {
-  fill: var(--vy-stay-glass);
+
+/* A specular streak across the glass — the one detail that stops a window
+   being a coloured rectangle. */
+.vy-stayart__spec {
+  fill: var(--vy-stay-spec);
 }
-.vy-stayart__line {
+
+.vy-stayart__mullion {
   fill: none;
-  stroke: var(--vy-stay-ink);
-  stroke-width: 1.2;
-  opacity: 0.55;
+  stroke: var(--vy-stay-mullion);
+  stroke-width: 0.9;
 }
+
 .vy-stayart__lamp {
   fill: var(--vy-stay-lamp);
 }
-.vy-stayart__reflect ellipse {
-  fill: var(--vy-stay-reflect);
+
+.vy-stayart__lampglow {
+  fill: var(--vy-stay-lampglow);
 }
-.vy-stayart__glints ellipse {
-  fill: var(--vy-stay-glint);
+
+/* -- thatch --------------------------------------------------------------- */
+
+/* Forty-eight reed bundles laid down the slope, each with its own weight and
+   opacity. Directional grain is what makes thatch read as thatch rather than
+   as a triangle. */
+.vy-stayart__thatch path {
+  stroke: var(--vy-stay-thatch);
+  stroke-linecap: round;
+}
+
+/* The turn of the roof toward the far corner, in shadow. */
+.vy-stayart__roofturn {
+  fill: var(--vy-stay-roof-3);
+  opacity: 0.5;
+}
+
+/* Reed ends, cut ragged. A ruled eave is the tell. */
+.vy-stayart__eave {
+  fill: var(--vy-stay-eave);
+}
+
+.vy-stayart__ridge {
+  stroke: var(--vy-stay-eave);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  opacity: 0.6;
+}
+
+/* The band of shade the overhang throws on the wall beneath it. */
+.vy-stayart__eaveshadow {
+  fill: var(--vy-stay-eaveshadow);
+}
+
+/* -- the reflection ------------------------------------------------------- */
+
+/* Not a mirror image: a moving surface chops a reflection into slivers whose
+   ends wander further and fade faster the closer they come. */
+.vy-stayart__reflect rect {
+  fill: var(--vy-stay-reflect);
 }
 
 /* ========================================================================== */
@@ -2429,11 +3053,15 @@ body {
   color: var(--vy-ink-2);
 }
 
+/* `justify-items: center` would make each row shrink-to-fit, and `.dx-stage`
+   is a flex container whose picker child has no intrinsic width — the two
+   together collapsed the picker to zero. The track stretches; the stage centres
+   its own contents. */
 .vy-built__stage {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0.9rem;
-  justify-items: center;
+  justify-items: stretch;
 }
 
 /* ========================================================================== */

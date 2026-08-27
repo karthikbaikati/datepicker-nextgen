@@ -40,7 +40,10 @@ export function daysInMonth(year: number, month: number): number {
 
 /**
  * Days since 1970-01-01 using the proleptic Gregorian calendar.
- * Based on Howard Hinnant's `days_from_civil` — exact for all years.
+ *
+ * Reimplemented from Howard Hinnant's `days_from_civil`, which the author places
+ * in the public domain — exact for all years.
+ * @see https://howardhinnant.github.io/date_algorithms.html
  */
 function toEpochDayRaw(year: number, month: number, day: number): number {
   const y = year - (month <= 2 ? 1 : 0);
@@ -56,7 +59,7 @@ export function toEpochDay(date: PlainDate): number {
   return toEpochDayRaw(date.year, date.month, date.day);
 }
 
-/** Inverse of {@link toEpochDay}. */
+/** Inverse of {@link toEpochDay} — Hinnant's `civil_from_days`, likewise public domain. */
 export function fromEpochDay(epochDay: number): PlainDate {
   const z = epochDay + 719468;
   const era = Math.floor((z >= 0 ? z : z - 146096) / 146097);

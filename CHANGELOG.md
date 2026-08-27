@@ -10,7 +10,7 @@ public API; renaming one is a breaking change.
 
 ## [Unreleased]
 
-## [1.0.0] - 2026-08-26
+## [1.0.0] - 2026-08-27
 
 Initial public release.
 
@@ -29,6 +29,12 @@ reference between changes so `useSyncExternalStore` and equivalent integrations 
 **Seven selection modes.** `single`, `range`, `multiple`, `week`, `month`, `quarter` and `year`,
 with `nights` / `days` range semantics, reverse-range repair, toggle-on-reselect, auto-advance and
 reset-on-complete.
+
+**Century navigation.** Four zoom levels — `day`, `month`, `year`, `decade` — each a twelve-cell
+grid. The caption zooms out, a cell zooms in, and the chevrons page one whole screen at the current
+level. Screens are aligned blocks rather than sliding windows, so paging never drifts. One decade
+screen spans 120 years, putting any date within a century four clicks from any other. `yearRange`
+(default `100`) sets navigation reach and never restricts what can be selected.
 
 **Constraints.** `minDate`, `maxDate`, `disabledDates` (list, ranges or predicate), `enabledDates`
 allowlist, `disabledDaysOfWeek`, `blockedRanges`, `disablePast`, `disableFuture`, `disableWeekends`,
@@ -81,8 +87,16 @@ explicit `data-theme` overrides, and six bundled themes: `midnight`, `emerald`, 
 **Per-day decoration.** `dayMeta(date)` supplying notes, dots, badges, tooltips, class names, inline
 styles and holiday marking.
 
-**Packaging.** Zero runtime dependencies, ESM + CJS, complete `.d.ts`, three tree-shakeable entry
-points (`.`, `./core`, `./vanilla`), declared `sideEffects`, and npm provenance on publish.
+**Container-aware sizing.** The picker sizes itself from its own container rather than the
+viewport, so it stays legible in a sidebar, a modal or a narrow grid column on any screen. Cell
+size, type scale, chip metrics and nav controls step down together, and a multi-month strip stops
+packing months side by side before cells shrink. Falls back to viewport media queries where
+container queries are unavailable.
+
+**Packaging.** Zero runtime dependencies, ESM + CJS, and per-condition type declarations — `.d.ts`
+under `import`, `.d.cts` under `require` — so CJS consumers on `moduleResolution: node16` get types
+too. Three tree-shakeable entry points (`.`, `./core`, `./vanilla`), declared `sideEffects`, and npm
+provenance on publish.
 
 [Unreleased]: https://github.com/karthikbaikati/datepicker-nextgen/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/karthikbaikati/datepicker-nextgen/releases/tag/v1.0.0

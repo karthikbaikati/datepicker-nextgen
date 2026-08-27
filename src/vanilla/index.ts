@@ -29,6 +29,7 @@
 export { attachDatePicker, createDatePicker } from './mount';
 export type {
   DatePickerChangeDetail,
+  DatePickerEventMap,
   DatePickerEventName,
   DatePickerInstance,
   VanillaOptions,

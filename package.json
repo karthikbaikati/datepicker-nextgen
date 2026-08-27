@@ -48,19 +48,34 @@
   "types": "./dist/react/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/react/index.d.ts",
-      "import": "./dist/react/index.js",
-      "require": "./dist/react/index.cjs"
+      "import": {
+        "types": "./dist/react/index.d.ts",
+        "default": "./dist/react/index.js"
+      },
+      "require": {
+        "types": "./dist/react/index.d.cts",
+        "default": "./dist/react/index.cjs"
+      }
     },
     "./core": {
-      "types": "./dist/core/index.d.ts",
-      "import": "./dist/core/index.js",
-      "require": "./dist/core/index.cjs"
+      "import": {
+        "types": "./dist/core/index.d.ts",
+        "default": "./dist/core/index.js"
+      },
+      "require": {
+        "types": "./dist/core/index.d.cts",
+        "default": "./dist/core/index.cjs"
+      }
     },
     "./vanilla": {
-      "types": "./dist/vanilla/index.d.ts",
-      "import": "./dist/vanilla/index.js",
-      "require": "./dist/vanilla/index.cjs"
+      "import": {
+        "types": "./dist/vanilla/index.d.ts",
+        "default": "./dist/vanilla/index.js"
+      },
+      "require": {
+        "types": "./dist/vanilla/index.d.cts",
+        "default": "./dist/vanilla/index.cjs"
+      }
     },
     "./styles.css": "./dist/styles.css",
     "./themes/*.css": "./dist/themes/*.css",
@@ -70,6 +85,7 @@
     "dist",
     "README.md",
     "LICENSE",
+    "THIRD-PARTY-NOTICES.md",
     "CHANGELOG.md"
   ],
   "scripts": {
@@ -90,8 +106,8 @@
     "prepublishOnly": "npm run verify"
   },
   "peerDependencies": {
-    "react": ">=17.0.0",
-    "react-dom": ">=17.0.0"
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
   },
   "peerDependenciesMeta": {
     "react": {

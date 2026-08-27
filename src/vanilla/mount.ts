@@ -53,6 +53,20 @@ export interface DatePickerChangeDetail {
   readonly meta: ChangeMeta;
 }
 
+/**
+ * What each event hands its handler, so `on()` can type the payload instead of
+ * making every subscriber narrow `unknown` by hand.
+ */
+export interface DatePickerEventMap {
+  change: DatePickerChangeDetail;
+  complete: DatePickerChangeDetail;
+  clear: DatePickerChangeDetail;
+  open: undefined;
+  close: undefined;
+  /** The first day of the newly visible month. */
+  monthchange: PlainDate;
+}
+
 export interface DatePickerInstance {
   readonly engine: DatePickerEngineApi;
   /** The `.dpng` root element. */
@@ -64,7 +78,10 @@ export interface DatePickerInstance {
   close(): void;
   toggle(): void;
   /** Subscribe to an instance event. Returns an unsubscribe function. */
-  on(event: DatePickerEventName, handler: (detail: unknown) => void): () => void;
+  on<E extends DatePickerEventName>(
+    event: E,
+    handler: (detail: DatePickerEventMap[E]) => void,
+  ): () => void;
   destroy(): void;
 }
 
@@ -604,16 +621,22 @@ function createInstance(
       if (isOpen) close();
       else open();
     },
-    on(event: DatePickerEventName, handler: (detail: unknown) => void): () => void {
+    on<E extends DatePickerEventName>(
+      event: E,
+      handler: (detail: DatePickerEventMap[E]) => void,
+    ): () => void {
       if (typeof handler !== 'function') return () => undefined;
       let handlers = emitter.get(event);
       if (!handlers) {
         handlers = new Set();
         emitter.set(event, handlers);
       }
-      handlers.add(handler);
+      // The emitter is a single untyped map so one Set serves every event; the
+      // public signature is what gives callers their payload type.
+      const stored = handler as (detail: unknown) => void;
+      handlers.add(stored);
       return () => {
-        emitter.get(event)?.delete(handler);
+        emitter.get(event)?.delete(stored);
       };
     },
     destroy(): void {

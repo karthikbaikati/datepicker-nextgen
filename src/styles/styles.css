@@ -35,6 +35,38 @@
  *              month/year/decade grids. `--dpng-zoom-cell-bg` is their
  *              per-cell fill knob, set by the state rules exactly the way
  *              `--dpng-day-bg` is set for a day cell.
+ *   responsive cell-base, cell-min, cell-floor, weeknumber-base,
+ *              weeknumber-min, font-size-base, month-need, card-pad-min,
+ *              ring-room — see "SIZED BY ITS CONTAINER" below.
+ *
+ * SIZED BY ITS CONTAINER
+ *   `.dpng-month` — one month's own box — is the file's only container query
+ *   context, and the day grid inside it derives its cell size from that box
+ *   continuously rather than through a ladder of breakpoints. A 240px sidebar
+ *   on a 1440px monitor therefore gets the same treatment a phone does, and the
+ *   two invariants hold at *every* width rather than at the tested ones:
+ *
+ *     a day cell is never narrower than 28px
+ *     a day cell is never less than 0.85 as wide as it is tall
+ *
+ *   The cell's height is `min(the size you asked for, the column's own width
+ *   ÷ 0.85)`, so height and width can never drift apart — that is the whole
+ *   mechanism, and it needs no breakpoints. The 28px width floor is held by
+ *   `min-inline-size` on the month itself; below the width where seven 28px
+ *   columns physically fit, the month strip scrolls horizontally rather than
+ *   shrinking the cells. A multi-month strip drops a month before any of it.
+ *
+ *   `data-size` is the size the geometry steps *down from*, not an override
+ *   that defeats it, so set `--dpng-cell-size` as usual and the container
+ *   clamps it where the geometry demands.
+ *
+ *   The container is deliberately NOT the root: `container-type: inline-size`
+ *   applies size containment, which zeroes an element's intrinsic width, and a
+ *   root that contributes no intrinsic width collapses inside every
+ *   shrink-to-fit parent — an `inline-block`, a float, an absolutely positioned
+ *   box, `justify-items: start`, a bare `<div>` in a flex row. Keeping the
+ *   containment down on `.dpng-month` leaves `.dpng` and `.dpng-card` sizing
+ *   themselves from their contents exactly as they always did.
  *
  * THEMES
  *   Light values live on `.dpng` and are always defined there — no colour in
@@ -145,6 +177,43 @@
   --dpng-zoom-gap: 6px;
   --dpng-zoom-cell-radius: var(--dpng-cell-radius);
   --dpng-zoom-block-size: calc(6 * var(--dpng-cell-size) + 5 * var(--dpng-gap) + 24px);
+
+  /* -- responsive baselines ----------------------------------------------- */
+  /*
+   * The month container at the end of this file clamps the day grid down as
+   * the month's own box narrows. A clamp cannot read the token it is writing —
+   * that is a custom-property cycle — so every clamped token keeps an
+   * untouched copy here. `data-size` (or your own override) sets the copy, and
+   * the geometry clamps down from it. That is what makes `data-size` the
+   * *starting* size rather than something the container overwrites.
+   */
+  --dpng-cell-base: var(--dpng-cell-size);
+  --dpng-weeknumber-base: var(--dpng-weeknumber-width);
+  --dpng-font-size-base: var(--dpng-font-size);
+  /* The two hard floors. `--dpng-cell-min` is the invariant this whole file
+     exists to hold; `--dpng-weeknumber-min` is how much the week-number column
+     is allowed to give back to the day columns before the strip has to scroll
+     instead. Together they are the narrowest a month may ever be. */
+  --dpng-cell-min: 28px;
+  --dpng-weeknumber-min: 14px;
+  --dpng-month-need: calc(7 * var(--dpng-cell-min));
+  /* The smallest day cell a coarse pointer should be given, wherever the
+     container is wide enough to afford it. Raised under `pointer: coarse`. */
+  --dpng-cell-floor: 0px;
+  /* Room kept inside the month strip's scroll box for the focus ring, which is
+     drawn 2px outside the day circle and would otherwise be clipped. */
+  --dpng-ring-room: 4px;
+  /* The narrowest the card's padding may get. It is not a taste call: the
+     zoom-out caption cancels its own 7px of button padding with a negative
+     inline margin so its text stays optically aligned, and that margin has to
+     land inside the card rather than outside it. */
+  --dpng-card-pad-min: 8px;
+}
+
+/* A week-number column is width the seven day columns never see, so a month
+   that carries one needs that much more before it is at its floor. */
+.dpng[data-week-numbers='true'] {
+  --dpng-month-need: calc(7 * var(--dpng-cell-min) + var(--dpng-weeknumber-min));
 }
 
 /* Dark, following the OS — never applied when the author pinned a theme. */
@@ -226,6 +295,7 @@
   --dpng-card-pad-bottom: 11px;
   --dpng-month-min: 210px;
   --dpng-weeknumber-width: 22px;
+  --dpng-weeknumber-min: 12px;
   --dpng-nav-button-size: 24px;
 }
 
@@ -243,6 +313,7 @@
   --dpng-card-pad-bottom: 18px;
   --dpng-month-min: 300px;
   --dpng-weeknumber-width: 32px;
+  --dpng-weeknumber-min: 16px;
   --dpng-nav-button-size: 32px;
 }
 
@@ -261,6 +332,10 @@
   display: block;
   position: relative;
   margin: 0;
+  /* As a flex or grid item the picker would otherwise refuse to go below its
+     min-content width and would punch out of a short line instead. It shrinks;
+     the month strip below holds the cell floor on the way down. */
+  min-inline-size: 0;
   color: var(--dpng-text);
   font-family: var(--dpng-font);
   font-size: var(--dpng-font-size);
@@ -347,13 +422,28 @@
 /*  Card                                                                      */
 /* ========================================================================== */
 
+/*
+ * The padding is the first thing a narrow container takes back. `--dpng-pad-room`
+ * is what is left over once the month has the width it needs, expressed as a
+ * percentage of the card's own containing block, so the padding falls away
+ * continuously as the container closes in rather than in breakpoint steps —
+ * and stops falling the moment the month is satisfied. `--dpng-card-pad-min` is
+ * the floor. Override `--dpng-card-pad` as usual: it is the value this clamps
+ * *down from*, never up to.
+ */
 .dpng-card {
+  --dpng-pad-room: max(
+    0px,
+    calc((100% - 2 * var(--dpng-border-width) - var(--dpng-month-need)) / 2)
+  );
   position: relative;
   display: flex;
   flex-direction: column;
   inline-size: 100%;
   max-inline-size: var(--dpng-card-width);
-  padding: var(--dpng-card-pad) var(--dpng-card-pad) var(--dpng-card-pad-bottom);
+  padding: max(var(--dpng-card-pad-min), min(var(--dpng-card-pad), var(--dpng-pad-room)))
+    max(var(--dpng-card-pad-min), min(var(--dpng-card-pad), var(--dpng-pad-room)))
+    max(var(--dpng-card-pad-min), min(var(--dpng-card-pad-bottom), var(--dpng-pad-room)));
   border: var(--dpng-border-width) solid var(--dpng-card-border);
   border-radius: var(--dpng-radius-card);
   background: var(--dpng-surface);
@@ -414,6 +504,7 @@
 }
 
 .dpng-header__title {
+  min-inline-size: 0;
   font-size: 1.04em;
   font-weight: 600;
   letter-spacing: -0.005em;
@@ -436,8 +527,12 @@
 /*  Fields (check-in / check-out)                                             */
 /* ========================================================================== */
 
+/* The two fields stack rather than overflow once they cannot both keep a
+   comfortable width — which under a coarse pointer, where each one is held to
+   44px, happens well before the card runs out of room. */
 .dpng-fields {
   display: flex;
+  flex-wrap: wrap;
   align-items: stretch;
   padding-block: 8px;
 }
@@ -462,12 +557,18 @@
   transition: background-color var(--dpng-duration) var(--dpng-ease);
 }
 
+/* "CHECK-IN" is a fixed string the consumer does not control the width of, and
+   the field it sits in can get very narrow. Ellipsise it rather than let it
+   paint across its neighbour, exactly as the value below it already does. */
 .dpng-field__label {
   font-size: 0.72em;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--dpng-text-subtle);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dpng-field__value {
@@ -512,8 +613,17 @@
 /*  Month navigation                                                          */
 /* ========================================================================== */
 
+/*
+ * The row wraps. With `showNavSelects` it carries a label, two `<select>`s and
+ * two buttons, which is more than a 200px card can put on one line — and a flex
+ * row that cannot wrap has nowhere to put the excess but outside the card. Every
+ * item below is given `min-inline-size: 0` as well, because a `<select>`'s
+ * automatic minimum is the width of its widest option (a month name) and would
+ * otherwise keep the line wide enough to overflow on its own.
+ */
 .dpng-nav {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   padding-block: 10px 4px;
@@ -521,6 +631,7 @@
 
 .dpng-nav__label {
   margin-inline-end: auto;
+  min-inline-size: 0;
   font-size: 1.04em;
   font-weight: 600;
   color: var(--dpng-text);
@@ -578,11 +689,16 @@
 
 .dpng-nav__selects {
   display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+  min-inline-size: 0;
 }
 
 .dpng-nav__select {
+  flex: 0 1 auto;
+  min-inline-size: 0;
   max-inline-size: 11ch;
   padding: 3px 6px;
   border: var(--dpng-border-width) solid var(--dpng-border-strong);
@@ -610,20 +726,55 @@
  * flexed parent, a tablet in portrait) the strip drops to fewer columns and
  * wraps instead of crushing every month into an unreadable 20px grid.
  */
+/*
+ * The strip is the picker's one scroll container, and it is the last line of
+ * defence for the 28px floor. Seven 28px columns plus a week-number column need
+ * 210px; a card content box narrower than that cannot hold them at any cell
+ * size, so below it the month keeps its floor (`min-inline-size` on
+ * `.dpng-month`) and this box scrolls instead. Scrolling a calendar sideways in
+ * a 180px sidebar is a poor experience; 19px day cells are a broken one, and
+ * `document.scrollWidth` never moves either way.
+ *
+ * The 4px padding is not decoration: `overflow` clips, and the day cell's focus
+ * ring is drawn 2px outside the circle. The matching negative margin hands the
+ * 4px straight back, so the strip sits exactly where it did without it.
+ */
 .dpng-months {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(var(--dpng-month-min), 100%), 1fr));
   justify-content: center;
   gap: var(--dpng-months-gap);
+  padding: var(--dpng-ring-room);
+  margin: calc(-1 * var(--dpng-ring-room));
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+/*
+ * A week-number column is width the seven day columns never see, so a month
+ * that carries one has to be that much wider before a second month is allowed
+ * to share the row. Without this the track minimum is met while the day columns
+ * behind it are not, and `auto-fit` packs a second month by squeezing the cells
+ * — the exact trade this file exists to refuse.
+ */
+.dpng[data-week-numbers='true'] .dpng-months {
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(calc(var(--dpng-month-min) + var(--dpng-weeknumber-width)), 100%), 1fr)
+  );
 }
 
 /* `inline-size: 100%` is load-bearing: the auto inline margins centre a month
    that is narrower than its track, but auto margins also suppress the grid
    item's default stretch — without an explicit size the month would collapse
    to its min-content width and the day grid would render as a squeezed column. */
+/* `--dpng-month-need` is the 28px invariant expressed as a width: seven columns
+   at the floor, plus a week-number column at *its* floor when one is shown. A
+   month is never narrower than that, whatever the track it landed in — the
+   strip above scrolls rather than let the columns give way. */
 .dpng-month {
   inline-size: 100%;
-  min-inline-size: 0;
+  min-inline-size: var(--dpng-month-need);
   max-inline-size: var(--dpng-month-max);
   margin-inline: auto;
 }
@@ -681,10 +832,15 @@
   align-items: center;
   justify-content: center;
   block-size: 20px;
+  min-inline-size: 0;
   font-size: 0.8em;
   font-weight: 600;
   color: var(--dpng-weekday-color);
   text-transform: none;
+  /* The week-number column's header ("Wk", "KW", "Sem.") is the one label here
+     that can outgrow its column once that column is at its floor. Clip it
+     rather than let it paint over the first day of the week. */
+  overflow: hidden;
 }
 
 .dpng-weekday--weekend {
@@ -801,9 +957,21 @@
   position: absolute;
   inset: 0;
   z-index: 1;
+  /* The disc has to stay a circle whatever shape the cell ends up in.
+     `100%` resolves against a different axis in each dimension, so sizing both
+     independently turns the disc into an ellipse as soon as the column is
+     narrower than `--dpng-cell-size`. Sizing the inline axis and deriving the
+     block axis from `aspect-ratio` keeps it round — but only if the block axis
+     is left free: pinning both `inset-block` edges would stretch it and win
+     over the ratio. Hence centring on the block axis with `translate`, which is
+     its own property and so does not clobber the `:active` scale `transform`. */
+  inset-inline: 0;
+  inset-block-start: 50%;
+  translate: 0 -50%;
   inline-size: min(100%, var(--dpng-cell-size));
-  block-size: min(100%, var(--dpng-cell-size));
-  margin: auto;
+  aspect-ratio: 1;
+  max-block-size: 100%;
+  margin-inline: auto;
   border: 0 solid transparent;
   border-radius: var(--dpng-cell-radius);
   background-color: var(--dpng-day-bg, transparent);
@@ -825,12 +993,20 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* `max-inline-size` + `overflow` are the no-overflow guard: a note is arbitrary
+   consumer text ("$1,240"), and a nowrap run wider than its column would paint
+   over the neighbouring cell and, at the end of a row, add real scrollable
+   overflow to the page. Clipping it inside the cell keeps the ring — which is
+   drawn on `::before`, outside this box — intact. */
 .dpng-day__note {
+  max-inline-size: 100%;
   font-size: 0.72em;
   font-weight: 500;
   line-height: 1;
   opacity: 0.75;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dpng-day__dots {
@@ -1094,7 +1270,17 @@
   .dpng-day:has(.dpng-day__note)::before {
     inline-size: 100%;
     block-size: 100%;
-    border-radius: calc(var(--dpng-cell-size) / 2);
+    /* The base rule leaves the block axis to `aspect-ratio`; the stadium wants
+       the full cell back, so it restates the box explicitly.
+       The radius must be a plain length, not a percentage: percentages in
+       `border-radius` resolve against a different axis in each dimension, so
+       `50%` gives elliptical corners on a non-square cell — a lopsided lozenge
+       rather than a pill. An oversized length is the standard stadium trick:
+       the browser scales every radius down proportionally until it fits, which
+       lands exactly on half the shorter side whatever the aspect. */
+    aspect-ratio: auto;
+    max-block-size: none;
+    border-radius: 9999px;
   }
 
   .dpng-day--today:has(.dpng-day__note)::after {
@@ -1127,7 +1313,9 @@
   grid-template-rows: repeat(4, minmax(var(--dpng-cell-size), 1fr));
   gap: var(--dpng-zoom-gap);
   inline-size: 100%;
-  min-inline-size: 0;
+  /* The same floor the day grid keeps, so "September" stays readable in a narrow
+     column and the card does not change width between zoom levels. */
+  min-inline-size: var(--dpng-month-need);
   max-inline-size: var(--dpng-month-max);
   min-block-size: var(--dpng-zoom-block-size);
   margin-inline: auto;
@@ -1388,6 +1576,7 @@
   display: inline-flex;
   align-items: baseline;
   gap: 5px;
+  max-inline-size: 100%;
   padding: var(--dpng-preset-pad);
   border: var(--dpng-border-width) solid var(--dpng-border-strong);
   border-radius: 999px;
@@ -1397,6 +1586,10 @@
   font-weight: 500;
   line-height: 1.3;
   white-space: nowrap;
+  /* The row wraps, but a single chip whose label is longer than the whole row
+     has nowhere to wrap to. Clipping it keeps it inside the card; the ring is
+     drawn on the chip's own box, so it is not clipped with it. */
+  overflow: hidden;
   transition:
     background-color var(--dpng-duration) var(--dpng-ease),
     border-color var(--dpng-duration) var(--dpng-ease),
@@ -1455,6 +1648,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
+  max-inline-size: 100%;
   padding: 7px 14px;
   border: var(--dpng-border-width) solid transparent;
   border-radius: var(--dpng-radius);
@@ -1545,6 +1739,7 @@
 
 .dpng-footer {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
@@ -1564,7 +1759,8 @@
 
 .dpng-footer__actions {
   display: flex;
-  flex: none;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
@@ -1927,48 +2123,227 @@
 }
 
 /* ========================================================================== */
-/*  Narrow screens                                                            */
+/*  Responsive — the picker sizes itself from its container, not the viewport  */
 /* ========================================================================== */
 
-@media (max-width: 420px) {
-  /* Full-bleed card, comfortable 40px touch targets, months stacked. */
+/*
+ * A picker is narrow because its *container* is narrow — a sidebar, a grid
+ * column, a card, a popover clamped to the viewport. A 1005px monitor can hold
+ * a dozen squeezed pickers, so a viewport media query cannot see the problem it
+ * is meant to fix.
+ *
+ * WHY THERE IS NO LADDER
+ *   A ladder of breakpoints can only ever be right at the widths it names. The
+ *   defect it is asked to fix is that the cell's *width* is decided by layout
+ *   (a `1fr` column) while its *height* is decided by a token, so the two drift
+ *   apart everywhere between the steps — and no number of steps closes that gap.
+ *   Instead the height is derived from the width, continuously:
+ *
+ *     cell height = min(the size you asked for, this column's width ÷ 0.85)
+ *
+ *   `100cqi` inside a month *is* the width the seven columns divide up, so the
+ *   column width is known exactly rather than estimated from the card, and the
+ *   ratio invariant holds by construction at every width, for every
+ *   `data-size`, month count and `showWeekNumbers`.
+ *
+ * WHY THE CONTAINER IS THE MONTH
+ *   `container-type: inline-size` brings size containment with it, and a
+ *   contained box contributes no intrinsic width to its parent. Put that on the
+ *   root and every shrink-to-fit parent — `inline-block`, float, absolute,
+ *   `justify-items: start`, a bare `<div>` in a flex row — measures the picker
+ *   as zero and collapses it. Put it on the card and the root collapses to the
+ *   card's padding for the same reason. `.dpng-month` is the deepest box whose
+ *   width answers the question being asked, and containing it costs nothing:
+ *   the strip's track minimum and the month's own `min-inline-size` state that
+ *   width explicitly, so the card and the root still size from their contents.
+ *
+ * WHAT HOLDS THE OTHER INVARIANT
+ *   The 28px width floor is not a query at all — it is `min-inline-size` on the
+ *   month plus card padding that yields to it, and, below the width where seven
+ *   28px columns physically fit, a strip that scrolls. Months are dropped before
+ *   any of that: `.dpng-months` sizes its tracks from `min(<month>, 100%)`, so a
+ *   container too narrow for two months collapses to one at full cell size.
+ *   Losing a month beats losing legibility.
+ */
+
+@supports (container-type: inline-size) {
+  .dpng-month {
+    container-type: inline-size;
+    container-name: dpng-month;
+  }
+
+  /*
+   * The type scale follows the month rather than the card. A day cell's height
+   * is `max(the cell size, whatever the content needs)`, and the content is a
+   * two-digit number over a consumer-supplied note — so at the 28px floor an
+   * unscaled 14px `data-size="lg"` note is what would break the ratio, not the
+   * cell size. Above ~225px of month this resolves to the inherited value.
+   */
+  .dpng-month__caption,
+  .dpng-weekdays,
+  .dpng-grid {
+    font-size: min(var(--dpng-font-size-base), calc(100cqi / 18));
+  }
+
+  /*
+   * The week-number column gives back whatever the day columns are short of
+   * their floor, down to `--dpng-weeknumber-min` — which is exactly the point at
+   * which the month has reached `--dpng-month-need` and the strip starts
+   * scrolling instead. Written on both the header and the grid because they are
+   * siblings, and a container query styles descendants only.
+   */
+  .dpng-weekdays,
+  .dpng-grid {
+    --dpng-weeknumber-width: clamp(
+      var(--dpng-weeknumber-min),
+      calc(100cqi - 7 * var(--dpng-cell-min)),
+      var(--dpng-weeknumber-base)
+    );
+  }
+
+  /* The mechanism, in three declarations. `--dpng-day-column` is the real width
+     of one `1fr` column; the cell size is the starting size clamped by what that
+     column can carry and lifted by the coarse-pointer floor where it fits. */
+  .dpng-grid {
+    --dpng-week-column: 0px;
+    --dpng-day-column: calc((100cqi - var(--dpng-week-column)) / 7);
+    --dpng-cell-size: min(
+      max(var(--dpng-cell-base), var(--dpng-cell-floor)),
+      calc(var(--dpng-day-column) / 0.85)
+    );
+  }
+
+  .dpng[data-week-numbers='true'] .dpng-grid {
+    --dpng-week-column: var(--dpng-weeknumber-width);
+  }
+
+  /* The zoom grid replaces the months rather than living inside one, so it has
+     no month to measure. Three cells across a strip is never the tight axis, so
+     the starting size and the touch floor are all it needs — and rebuilding the
+     block size from that keeps the card from changing height on every zoom. */
+  .dpng-months {
+    --dpng-cell-size: max(var(--dpng-cell-base), var(--dpng-cell-floor));
+    --dpng-zoom-block-size: calc(6 * var(--dpng-cell-size) + 5 * var(--dpng-gap) + 24px);
+  }
+}
+
+/*
+ * Touch targets. 44×44 is unconditional for every control that is not laid out
+ * seven-across — nav buttons, the zoom-out label, preset chips, footer buttons,
+ * selects, fields, the text input — because there is always room for them:
+ * they wrap.
+ *
+ * The day cell is the one control that cannot be promised it. Seven 44px columns
+ * need 308px of month plus the card's chrome, and a 320px phone does not have
+ * it. `--dpng-cell-floor` therefore lifts the cell to 44px wherever the column
+ * is wide enough to carry it and stops short where it is not — the alternative
+ * is a calendar that scrolls sideways on most phones, which trades a touch
+ * target for a worse one. The ratio invariant still holds on the way down.
+ */
+@media (pointer: coarse) {
+  /* `.dpng[data-size]` is listed alongside `.dpng` so these outrank the
+     per-size blocks above, which are attribute selectors and would otherwise
+     win the month bounds on specificity whatever the source order. */
   .dpng,
-  .dpng[data-size='sm'],
-  .dpng[data-size='md'] {
-    --dpng-cell-size: 40px;
-    --dpng-card-width: none;
-    --dpng-month-min: 100%;
-    --dpng-month-max: none;
-    --dpng-nav-button-size: 36px;
-    --dpng-card-pad: 16px;
+  .dpng[data-size] {
+    --dpng-cell-floor: 44px;
+    /* "Fewer months rather than smaller cells" is the contract, and this is the
+       line that enforces it: a month may not share the strip unless it can still
+       carry seven touch targets, so `auto-fit` drops a column instead of
+       splitting one 44px-capable strip into two that are not. */
+    --dpng-month-min: calc(7 * 44px);
+    /* And a month capped at 320px cannot give seven 44px columns once a
+       week-number column has taken 32 of them, so the cap is raised by exactly
+       what the floor asks for. Without this a 900px container still hands a
+       coarse pointer 41px day cells and the floor is unreachable at any width. */
+    --dpng-month-max: max(320px, calc(7 * 44px + var(--dpng-weeknumber-base)));
+    --dpng-preset-pad: 7px 12px;
+    --dpng-preset-gap: 8px;
   }
 
-  .dpng[data-size='lg'] {
-    --dpng-card-width: none;
-    --dpng-month-min: 100%;
-    --dpng-month-max: none;
-    --dpng-nav-button-size: 36px;
+  .dpng-nav__button,
+  .dpng-nav__label--button,
+  .dpng-nav__select,
+  .dpng-preset,
+  .dpng-button,
+  .dpng-field,
+  .dpng-time__select,
+  .dpng-input__field {
+    min-inline-size: 44px;
+    min-block-size: 44px;
   }
 
-  /* However many months are configured, a phone shows one column. */
-  .dpng[data-months] {
-    --dpng-month-columns: 1;
+  .dpng-zoom__cell {
+    min-block-size: max(var(--dpng-cell-size), 44px);
   }
+}
 
-  .dpng-card,
-  .dpng[data-months]:not([data-months='1']),
-  .dpng[data-months]:not([data-months='1']) .dpng-card {
-    inline-size: 100%;
+/*
+ * The fallback for engines without container queries: the viewport rules this
+ * file shipped before, unchanged. They cannot see a narrow container on a wide
+ * screen — that is the defect the month container above exists to fix — but they
+ * keep an older engine degrading rather than breaking. The 28px width floor
+ * still holds there, because `min-inline-size` on the month and the strip's
+ * `overflow-x` are plain CSS with no query behind them; only the height's
+ * ratio clamp, which needs `cqi`, is lost.
+ */
+@supports not (container-type: inline-size) {
+  @media (max-width: 420px) {
+    /* Full-bleed card, comfortable 40px touch targets, months stacked. */
+    .dpng,
+    .dpng[data-size='sm'],
+    .dpng[data-size='md'] {
+      --dpng-cell-size: 40px;
+      --dpng-card-width: none;
+      --dpng-month-min: 100%;
+      --dpng-month-max: none;
+      --dpng-nav-button-size: 36px;
+      --dpng-card-pad: 16px;
+    }
+
+    .dpng[data-size='lg'] {
+      --dpng-card-width: none;
+      --dpng-month-min: 100%;
+      --dpng-month-max: none;
+      --dpng-nav-button-size: 36px;
+    }
+
+    /* However many months are configured, a phone shows one column. */
+    .dpng[data-months] {
+      --dpng-month-columns: 1;
+    }
+
+    .dpng-card,
+    .dpng[data-months]:not([data-months='1']),
+    .dpng[data-months]:not([data-months='1']) .dpng-card {
+      inline-size: 100%;
+    }
+
+    .dpng-presets {
+      gap: 8px;
+    }
+
+    .dpng-preset {
+      padding: 7px 12px;
+    }
+
+    .dpng[data-variant='sheet'] .dpng-card {
+      --dpng-card-pad: 16px;
+      --dpng-card-pad-bottom: 16px;
+    }
   }
+}
 
-  .dpng-presets {
-    gap: 8px;
-  }
+/* ========================================================================== */
+/*  Phone chrome                                                              */
+/* ========================================================================== */
 
-  .dpng-preset {
-    padding: 7px 12px;
-  }
-
+/*
+ * These three are genuinely about the screen rather than the container: a
+ * bottom sheet and a modal are sized by the viewport by definition, so they
+ * stay on a media query in both branches.
+ */
+@media (max-width: 420px) {
   /* One-handed sheet: edge to edge, taller thumb zone, no side inset. */
   .dpng.dpng-sheet,
   .dpng .dpng-sheet {
@@ -1976,11 +2351,6 @@
     max-block-size: 88dvh;
     padding-inline: 0;
     padding-block-end: max(20px, env(safe-area-inset-bottom, 0px));
-  }
-
-  .dpng[data-variant='sheet'] .dpng-card {
-    --dpng-card-pad: 16px;
-    --dpng-card-pad-bottom: 16px;
   }
 
   .dpng[data-variant='sheet'] .dpng-footer__actions .dpng-button {
