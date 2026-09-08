@@ -1,0 +1,52 @@
+# Dependency updates.
+#
+# Everything in package.json is a devDependency (the published package has no
+# runtime dependencies), so the npm group below covers the whole toolchain.
+# Minor and patch bumps are batched into one weekly PR; majors always arrive as
+# their own PR so breaking changes get reviewed on their own.
+#
+# Action pins are full commit SHAs. Dependabot updates the SHA and the trailing
+# version comment together, so the workflows stay pinned after every bump.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: America/New_York
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - npm
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      dev-dependencies:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: America/New_York
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: chore(ci)
+    groups:
+      actions:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch

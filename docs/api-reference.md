@@ -93,16 +93,17 @@ Accepted by `createDatePicker()` (core and vanilla), `useDatePicker()`, `<DatePi
 
 ### Calendar layout
 
-| Option               | Type        | Default               | Description                                                                                                                                      |
-| -------------------- | ----------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `numberOfMonths`     | `number`    | `1`                   | Months rendered side by side (or stacked when `orientation="vertical"`).                                                                         |
-| `fixedWeeks`         | `boolean`   | `true`                | Always emit 6 week rows so the calendar never changes height.                                                                                    |
-| `showOutsideDays`    | `boolean`   | `true`                | Render leading/trailing days from neighbouring months. Outside cells are always emitted for grid geometry; this controls whether they are shown. |
-| `selectOutsideDays`  | `boolean`   | `true`                | Allow clicking those greyed-out days.                                                                                                            |
-| `showWeekNumbers`    | `boolean`   | `false`               | Leading ISO-8601 week-number column (`role="rowheader"`).                                                                                        |
-| `defaultMonth`       | `DateInput` | selection, else today | Month the calendar opens on.                                                                                                                     |
-| `month`              | `DateInput` | —                     | Controlled visible month. Pair with `onMonthChange`.                                                                                             |
-| `restrictNavigation` | `boolean`   | `true`                | Clamp month navigation to `minDate`/`maxDate` — this is what disables the prev/next chevrons.                                                    |
+| Option               | Type                           | Default               | Description                                                                                                                                                                                  |
+| -------------------- | ------------------------------ | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `numberOfMonths`     | `number`                       | `1`                   | Months rendered side by side (or stacked when `orientation="vertical"`). Capped at 24 (`MAX_NUMBER_OF_MONTHS`) — larger values are reduced, not rejected.                                    |
+| `yearRange`          | `number \| { past?, future? }` | `100`                 | How far the year dropdown and the zoomed-out grids reach either side of the visible month. Navigation reach only — never restricts selection. Each side is capped at 1000 (`MAX_YEAR_SPAN`). |
+| `fixedWeeks`         | `boolean`                      | `true`                | Always emit 6 week rows so the calendar never changes height.                                                                                                                                |
+| `showOutsideDays`    | `boolean`                      | `true`                | Render leading/trailing days from neighbouring months. Outside cells are always emitted for grid geometry; this controls whether they are shown.                                             |
+| `selectOutsideDays`  | `boolean`                      | `true`                | Allow clicking those greyed-out days.                                                                                                                                                        |
+| `showWeekNumbers`    | `boolean`                      | `false`               | Leading ISO-8601 week-number column (`role="rowheader"`).                                                                                                                                    |
+| `defaultMonth`       | `DateInput`                    | selection, else today | Month the calendar opens on.                                                                                                                                                                 |
+| `month`              | `DateInput`                    | —                     | Controlled visible month. Pair with `onMonthChange`.                                                                                                                                         |
+| `restrictNavigation` | `boolean`                      | `true`                | Clamp month navigation to `minDate`/`maxDate` — this is what disables the prev/next chevrons.                                                                                                |
 
 ### Interaction
 
@@ -719,6 +720,21 @@ Every helper is pure, never mutates, and never touches `Date` for arithmetic.
 | Calendar facts      | `getWeekday`, `getQuarter`, `getDayOfYear`, `getISOWeek`, `getISOWeekYear`, `isLeapYear`, `daysInMonth`, `isWeekend`                                           |
 | Ranges              | `normalizeRange`, `rangeLength(range, semantics)`, `rangeContains`, `rangesOverlap`, `eachDayOfInterval`                                                       |
 | Time                | `plainTime(h, m?, s?)`, `toPlainTime`, `timeToMinutes`, `minutesToTime`, `compareTimes`, `clampTime`                                                           |
+
+### Input bounds
+
+Every date the library accepts is normalised through `toPlainDate`, which returns `null` rather
+than a broken date when a field is not an integer or the year is outside the range JavaScript's
+`Date` can represent (`-271820` … `275759`). The engine additionally holds the _visible_ month
+inside a slightly tighter formattable range (`-270000` … `274000`, `MIN_YEAR` / `MAX_YEAR` in
+`intl`), so the decade screen and the year list can still be formatted at the very edge;
+`nextMonth` / `previousMonth` clamp to it rather than overflow. `parseDateString` and
+`parseRangeString` refuse input
+longer than 256 characters (`MAX_INPUT_LENGTH`) before running any pattern, and `numberOfMonths`
+and `yearRange` are capped as noted above. Host-supplied callbacks (`dayMeta`, `formatters`,
+`labels` functions, `presets[].getValue`, `isDateUnavailable`, every `on*` handler and
+`subscribe` listener) are guarded: a throw is reported once via `console.error` and the default
+is used, and one failing listener never prevents the others from running.
 
 ## Vanilla API
 

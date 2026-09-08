@@ -101,6 +101,24 @@ function toNumber(value: string | null): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+/**
+ * Attribute text is untrusted page input. Anything past this length is
+ * ignored outright, before any parsing: no legitimate option needs more
+ * (10 000 JSON range objects fit comfortably), and it bounds every regex,
+ * `JSON.parse` and split below.
+ */
+const MAX_ATTRIBUTE_LENGTH = 512 * 1024;
+/** Entries kept from a list attribute; the rest are dropped before any per-entry work. */
+const MAX_LIST_LENGTH = 10_000;
+
+function reportAttribute(name: string, reason: string): void {
+  console.error(`<nextgen-date-picker>: ignoring attribute "${name}" — ${reason}`);
+}
+
+function tooLong(text: string | null): boolean {
+  return text !== null && text.length > MAX_ATTRIBUTE_LENGTH;
+}
+
 /** Accepts a JSON array or a comma-separated list — both are common in templates. */
 function toList(value: string | null): unknown[] | undefined {
   if (value === null) return undefined;
@@ -111,21 +129,43 @@ function toList(value: string | null): unknown[] | undefined {
       const parsed: unknown = JSON.parse(text);
       // `Array.isArray` narrows `unknown` to `any[]`; widening to `unknown[]`
       // keeps the entries intact — they may be ISO strings *or* `{start, end}`
-      // range objects, and coercing them would destroy the latter.
-      if (Array.isArray(parsed)) return parsed as unknown[];
+      // range objects. Entries are filtered by shape, never coerced: a nested
+      // array from a JSON bomb would recurse in `Array.prototype.toString`.
+      if (Array.isArray(parsed)) return (parsed as unknown[]).slice(0, MAX_LIST_LENGTH);
     } catch {
       /* fall through to the comma list */
     }
   }
-  return text
-    .split(',')
-    .map((entry) => entry.trim())
-    .filter((entry) => entry !== '');
+  const out: string[] = [];
+  for (const entry of text.split(',')) {
+    const trimmed = entry.trim();
+    if (trimmed === '') continue;
+    out.push(trimmed);
+    if (out.length === MAX_LIST_LENGTH) break;
+  }
+  return out;
 }
 
 function toDateList(value: string | null): string[] | undefined {
+  return toList(value)?.filter((entry): entry is string => typeof entry === 'string');
+}
+
+/** `"0,6"` or JSON `[0, 6]`: strings and finite numbers, nothing else. */
+function toDayOfWeekList(value: string | null): number[] | undefined {
   const list = toList(value);
-  return list?.map((entry) => String(entry));
+  if (!list) return undefined;
+  const out: number[] = [];
+  for (const entry of list) {
+    const day = typeof entry === 'string' ? Number(entry) : entry;
+    if (typeof day === 'number' && Number.isFinite(day)) out.push(day);
+  }
+  return out;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const proto: unknown = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
 }
 
 function toRangeList(value: string | null): DateRangeInput[] | undefined {
@@ -134,19 +174,36 @@ function toRangeList(value: string | null): DateRangeInput[] | undefined {
   const out: DateRangeInput[] = [];
   for (const entry of list) {
     if (typeof entry === 'string') {
-      const [start, end] = entry.split(RANGE_SPLIT);
-      if (start && end) out.push({ start: start.trim(), end: end.trim() });
+      const [start, end] = splitRange(entry);
+      if (start && end) out.push({ start, end });
       continue;
     }
-    if (entry && typeof entry === 'object' && 'start' in entry && 'end' in entry) {
-      const range = entry;
-      out.push({ start: range.start as string, end: range.end as string });
+    if (
+      isPlainObject(entry) &&
+      typeof entry['start'] === 'string' &&
+      typeof entry['end'] === 'string'
+    ) {
+      out.push({ start: entry['start'], end: entry['end'] });
     }
   }
   return out;
 }
 
-const RANGE_SPLIT = /\s*(?:\.\.|\/|–|—|(?:^|\s)to(?:\s|$))\s*/;
+/**
+ * Range separators: `..`, `/`, an en/em dash, or a whitespace-bounded `to`.
+ * There is deliberately no leading `\s*`: with one, every position inside a
+ * long whitespace run re-scans the run (O(n²)). Parts are trimmed instead.
+ */
+const RANGE_SPLIT = /\.\.|\/|–|—|(?:^|\s)to(?=\s|$)/;
+
+function splitRange(text: string): string[] {
+  const out: string[] = [];
+  for (const part of text.split(RANGE_SPLIT)) {
+    const trimmed = part.trim();
+    if (trimmed !== '') out.push(trimmed);
+  }
+  return out;
+}
 
 /**
  * Decode the `value` attribute for the current mode: `"2026-09-04"`,
@@ -154,11 +211,12 @@ const RANGE_SPLIT = /\s*(?:\.\.|\/|–|—|(?:^|\s)to(?:\s|$))\s*/;
  */
 export function parseValueAttribute(text: string | null, mode: SelectionMode): ValueInput {
   if (text === null) return undefined;
+  if (typeof text !== 'string' || tooLong(text)) return null;
   const trimmed = text.trim();
   if (trimmed === '') return null;
 
   if (RANGE_MODES.has(mode)) {
-    const parts = trimmed.split(RANGE_SPLIT).filter((part) => part.trim() !== '');
+    const parts = splitRange(trimmed);
     const start = toPlainDate(parts[0] ?? null);
     const end = toPlainDate(parts[1] ?? null);
     if (!start) return null;
@@ -166,10 +224,13 @@ export function parseValueAttribute(text: string | null, mode: SelectionMode): V
   }
 
   if (mode === 'multiple') {
-    return trimmed
-      .split(',')
-      .map((part) => toPlainDate(part.trim()))
-      .filter((date): date is NonNullable<typeof date> => date !== null);
+    const dates: NonNullable<ReturnType<typeof toPlainDate>>[] = [];
+    for (const part of trimmed.split(',')) {
+      const date = toPlainDate(part.trim());
+      if (date) dates.push(date);
+      if (dates.length === MAX_LIST_LENGTH) break;
+    }
+    return dates;
   }
 
   return toPlainDate(trimmed);
@@ -235,11 +296,7 @@ function optionsForAttribute(
     case 'enabled-dates':
       return { enabledDates: toDateList(value) };
     case 'disabled-days-of-week':
-      return {
-        disabledDaysOfWeek: toDateList(value)
-          ?.map((entry) => Number(entry))
-          .filter((day) => Number.isFinite(day)),
-      };
+      return { disabledDaysOfWeek: toDayOfWeekList(value) };
     case 'blocked-ranges':
       return { blockedRanges: toRangeList(value) };
     case 'disable-past':
@@ -300,6 +357,28 @@ function optionsForAttribute(
       return { showTime: toBool(value) };
     default:
       return {};
+  }
+}
+
+/**
+ * `optionsForAttribute` with the two guarantees a custom-element reaction
+ * needs: an over-long attribute is dropped before any parsing, and a decode
+ * failure is reported instead of thrown out of the DOM into `window.onerror`.
+ */
+function safeOptionsForAttribute(
+  name: string,
+  value: string | null,
+  mode: SelectionMode,
+): Partial<VanillaOptions> {
+  if (tooLong(value)) {
+    reportAttribute(name, `longer than ${MAX_ATTRIBUTE_LENGTH} characters`);
+    return {};
+  }
+  try {
+    return optionsForAttribute(name, value, mode);
+  } catch (error) {
+    reportAttribute(name, error instanceof Error ? error.message : String(error));
+    return {};
   }
 }
 
@@ -379,16 +458,28 @@ export function defineDatePickerElement(tagName = 'nextgen-date-picker'): void {
       if (previous === next || !this.instance) return;
       // Before connection the attribute is read again by `connectedCallback`,
       // so there is nothing to patch and nothing to remember.
-      if (name === 'value') {
-        this.instance.setValue(parseValueAttribute(next, this.currentMode()) ?? null);
+      if (tooLong(next)) {
+        reportAttribute(name, `longer than ${MAX_ATTRIBUTE_LENGTH} characters`);
         return;
       }
-      this.instance.update(optionsForAttribute(name, next, this.currentMode()));
+      try {
+        if (name === 'value') {
+          this.instance.setValue(parseValueAttribute(next, this.currentMode()) ?? null);
+          return;
+        }
+        this.instance.update(optionsForAttribute(name, next, this.currentMode()));
+      } catch (error) {
+        // A reaction throw surfaces as an uncaught `window` error; the element
+        // keeps its previous state and says which attribute it dropped.
+        reportAttribute(name, error instanceof Error ? error.message : String(error));
+      }
     }
 
     private currentMode(): SelectionMode {
       const attribute = this.getAttribute('mode');
-      if (attribute && MODES.has(attribute)) return attribute as SelectionMode;
+      if (attribute && !tooLong(attribute) && MODES.has(attribute)) {
+        return attribute as SelectionMode;
+      }
       const fromOverride = this.overrides.mode;
       return fromOverride ?? 'single';
     }
@@ -398,7 +489,7 @@ export function defineDatePickerElement(tagName = 'nextgen-date-picker'): void {
       let options: Partial<VanillaOptions> = {};
       for (const name of OBSERVED) {
         if (!this.hasAttribute(name)) continue;
-        options = { ...options, ...optionsForAttribute(name, this.getAttribute(name), mode) };
+        options = { ...options, ...safeOptionsForAttribute(name, this.getAttribute(name), mode) };
       }
       return options;
     }

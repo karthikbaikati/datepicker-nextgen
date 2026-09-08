@@ -223,6 +223,58 @@ function flag(on: boolean): 'true' | undefined {
   return on ? 'true' : undefined;
 }
 
+/* ------------------------------ dayMeta shape ----------------------------- */
+
+/*
+ * `dayMeta` is a consumer callback, so its result is validated at the render
+ * boundary rather than trusted: a string where an array was promised, or a
+ * `null` inside `dots`, must degrade to "no decoration", never throw. Values
+ * are only ever rendered as text or attribute values. The vanilla renderer
+ * applies the same rules so both produce identical cells.
+ */
+
+/** One validated dot indicator. */
+export interface DayDot {
+  readonly color: string;
+  readonly label: string | undefined;
+}
+
+const MAX_DOTS = 3;
+
+/** Text-only fields: strings and numbers render, everything else is dropped. */
+export function dayMetaText(value: unknown): string | undefined {
+  if (typeof value === 'string') return value === '' ? undefined : value;
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return undefined;
+}
+
+export function dayMetaDots(value: unknown): DayDot[] {
+  if (!Array.isArray(value)) return [];
+  const out: DayDot[] = [];
+  for (const dot of value as readonly unknown[]) {
+    if (typeof dot === 'string') {
+      out.push({ color: dot, label: undefined });
+    } else if (typeof dot === 'object' && dot !== null) {
+      const { color, label } = dot as { color?: unknown; label?: unknown };
+      if (typeof color === 'string') {
+        out.push({ color, label: typeof label === 'string' ? label : undefined });
+      }
+    }
+    if (out.length === MAX_DOTS) break;
+  }
+  return out;
+}
+
+/** React rejects a string `style` outright; only a plain object of string/number values passes. */
+export function dayMetaStyle(value: unknown): Record<string, string | number> | undefined {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined;
+  const out: Record<string, string | number> = {};
+  for (const [property, entry] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof entry === 'string' || typeof entry === 'number') out[property] = entry;
+  }
+  return out;
+}
+
 function dayClassName(day: DayInfo): string {
   let className = 'dpng-day';
   if (day.isToday) className += ' dpng-day--today';
@@ -514,8 +566,8 @@ export function useDatePicker(options: UseDatePickerOptions = EMPTY_OPTIONS): Us
           'aria-selected': day.ariaSelected,
           'aria-current': day.ariaCurrent,
           'aria-label': day.ariaLabel,
-          title: day.meta?.tooltip,
-          style: day.meta?.style,
+          title: dayMetaText(day.meta?.tooltip),
+          style: dayMetaStyle(day.meta?.style),
           'data-date': day.key,
           'data-today': flag(day.isToday),
           'data-selected': flag(day.isSelected),

@@ -10,9 +10,13 @@ import type { DateInput, DateRange, PlainDate, PlainTime, RangeSemantics } from 
 
 /* ------------------------------- construction ------------------------------ */
 
-/** Create a normalized {@link PlainDate}. Out-of-range days roll over (day 32 of Jan → Feb 1). */
+/**
+ * Create a normalized {@link PlainDate}. Out-of-range days roll over (day 32 of
+ * Jan → Feb 1). Fractional fields are truncated toward zero, so a fractional
+ * input can never yield a fractional date.
+ */
 export function plainDate(year: number, month: number, day: number): PlainDate {
-  return fromEpochDay(toEpochDayRaw(year, month, day));
+  return fromEpochDay(toEpochDayRaw(Math.trunc(year), Math.trunc(month), Math.trunc(day)));
 }
 
 export function isPlainDate(value: unknown): value is PlainDate {
@@ -42,12 +46,18 @@ export function daysInMonth(year: number, month: number): number {
  * Days since 1970-01-01 using the proleptic Gregorian calendar.
  *
  * Reimplemented from Howard Hinnant's `days_from_civil`, which the author places
- * in the public domain — exact for all years.
+ * in the public domain — exact for all years. Hinnant's `y - 399` / `z - 146096`
+ * adjustments emulate floor division in C; `Math.floor` already floors, so they
+ * are omitted here (keeping them shifts every date before 0000-03-01 by a day).
  * @see https://howardhinnant.github.io/date_algorithms.html
  */
-function toEpochDayRaw(year: number, month: number, day: number): number {
-  const y = year - (month <= 2 ? 1 : 0);
-  const era = Math.floor((y >= 0 ? y : y - 399) / 400);
+function toEpochDayRaw(year: number, rawMonth: number, day: number): number {
+  // Floor-modulo the month first so month 0 / 13 / -5 roll into the right year.
+  const m0 = rawMonth - 1;
+  const monthYear = year + Math.floor(m0 / 12);
+  const month = m0 - Math.floor(m0 / 12) * 12 + 1;
+  const y = monthYear - (month <= 2 ? 1 : 0);
+  const era = Math.floor(y / 400);
   const yoe = y - era * 400;
   const mp = (month + 9) % 12;
   const doy = Math.floor((153 * mp + 2) / 5) + day - 1;
@@ -62,7 +72,7 @@ export function toEpochDay(date: PlainDate): number {
 /** Inverse of {@link toEpochDay} — Hinnant's `civil_from_days`, likewise public domain. */
 export function fromEpochDay(epochDay: number): PlainDate {
   const z = epochDay + 719468;
-  const era = Math.floor((z >= 0 ? z : z - 146096) / 146097);
+  const era = Math.floor(z / 146097);
   const doe = z - era * 146097;
   const yoe = Math.floor(
     (doe - Math.floor(doe / 1460) + Math.floor(doe / 36524) - Math.floor(doe / 146096)) / 365,
@@ -79,40 +89,53 @@ export function fromEpochDay(epochDay: number): PlainDate {
 
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*)?$/;
 
-/** Coerce anything reasonable into a {@link PlainDate}. Returns `null` when impossible. */
+/**
+ * Years whose every local midnight is a valid `Date`. `Date` spans
+ * -271821-04-20 … 275760-09-13 UTC; the two edge years are only partially
+ * covered, and `toDate` builds *local* midnight (up to ±14 h away from UTC), so
+ * they are excluded outright. Anything past this throws `RangeError` from `Intl`.
+ */
+const MIN_YEAR = -271820;
+const MAX_YEAR = 275759;
+
+function inDateRange(date: PlainDate): PlainDate | null {
+  return date.year >= MIN_YEAR && date.year <= MAX_YEAR ? date : null;
+}
+
+function fromNativeDate(d: Date): PlainDate | null {
+  if (Number.isNaN(d.getTime())) return null;
+  return inDateRange({ year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate() });
+}
+
+/**
+ * Coerce anything reasonable into a {@link PlainDate}. Returns `null` when
+ * impossible: non-integer fields, and years a `Date` cannot represent, are
+ * rejected rather than rounded.
+ */
 export function toPlainDate(input: DateInput): PlainDate | null {
   if (input == null || input === '') return null;
   if (isPlainDate(input)) {
     if (
-      !Number.isFinite(input.year) ||
-      !Number.isFinite(input.month) ||
-      !Number.isFinite(input.day)
+      !Number.isInteger(input.year) ||
+      !Number.isInteger(input.month) ||
+      !Number.isInteger(input.day)
     )
       return null;
-    return plainDate(input.year, input.month, input.day);
+    return inDateRange(plainDate(input.year, input.month, input.day));
   }
-  if (input instanceof Date) {
-    if (Number.isNaN(input.getTime())) return null;
-    return { year: input.getFullYear(), month: input.getMonth() + 1, day: input.getDate() };
-  }
+  if (input instanceof Date) return fromNativeDate(input);
   if (typeof input === 'number') {
     if (!Number.isFinite(input)) return null;
-    const d = new Date(input);
-    if (Number.isNaN(d.getTime())) return null;
-    return { year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate() };
+    return fromNativeDate(new Date(input));
   }
   if (typeof input === 'string') {
     const trimmed = input.trim();
     const iso = ISO_DATE.exec(trimmed);
     if (iso) {
       // Read the calendar fields literally so "2026-09-04" is never shifted by a timezone.
-      return plainDate(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+      return inDateRange(plainDate(Number(iso[1]), Number(iso[2]), Number(iso[3])));
     }
-    const parsed = new Date(trimmed);
-    if (!Number.isNaN(parsed.getTime())) {
-      return { year: parsed.getFullYear(), month: parsed.getMonth() + 1, day: parsed.getDate() };
-    }
-    return null;
+    return fromNativeDate(new Date(trimmed));
   }
   return null;
 }
@@ -212,7 +235,9 @@ export const addWeeks = (date: PlainDate, amount: number): PlainDate => addDays(
 export function addMonths(date: PlainDate, amount: number): PlainDate {
   const total = date.year * 12 + (date.month - 1) + Math.trunc(amount);
   const year = Math.floor(total / 12);
-  const month = (total % 12) + 1;
+  // Floor-modulo: `total % 12` keeps the sign of a negative total, which would
+  // put every date before year 0 in month -10..0.
+  const month = total - year * 12 + 1;
   return { year, month, day: Math.min(date.day, daysInMonth(year, month)) };
 }
 

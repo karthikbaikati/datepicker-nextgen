@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { DatePickerEngine, createDatePicker } from '../src/core/engine';
+import { MAX_YEAR, MIN_YEAR } from '../src/core/intl';
 import {
   createLibraryAdapter,
   isoStringAdapter,
@@ -1218,5 +1219,23 @@ describe('engine: modes end to end', () => {
     picker.select(sep(14));
     picker.select(sep(20));
     expect(asRange(picker.getSnapshot().value)).toBe('2026-09-10..2026-09-20');
+  });
+});
+
+describe('engine: navigation reach', () => {
+  // The view is held inside the *formattable* range (`MIN_YEAR`/`MAX_YEAR` in
+  // src/core/intl.ts), which sits inside the wider Date-representable range so
+  // a decade screen and the year list still format at the edge. A count that
+  // overshoots must land on that edge, never be a silent no-op.
+  it('lands on the formattable edge for an absurd nextMonth count', () => {
+    const picker = createDatePicker({ mode: 'single', today: plainDate(2026, 9, 4) });
+    picker.nextMonth(1e15);
+    expect(picker.getSnapshot().months[0]?.year).toBe(MAX_YEAR);
+  });
+
+  it('lands on the formattable edge for an absurd previousMonth count', () => {
+    const picker = createDatePicker({ mode: 'single', today: plainDate(2026, 9, 4) });
+    picker.previousMonth(1e15);
+    expect(picker.getSnapshot().months[0]?.year).toBe(MIN_YEAR);
   });
 });

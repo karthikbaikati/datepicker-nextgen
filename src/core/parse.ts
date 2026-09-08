@@ -281,10 +281,31 @@ interface NameHit {
 }
 
 /** Marks are kept: stripping them would truncate Tamil `சனி` to `சன`. */
-const EDGE_PUNCTUATION = /^[^\p{L}\p{N}\p{M}]+|[^\p{L}\p{N}\p{M}]+$/gu;
+const NAME_CHARACTER = /[\p{L}\p{N}\p{M}]/u;
 
+/**
+ * Strip leading and trailing punctuation. Scanned by hand from both ends: the
+ * regex form (`[^…]+$`) re-scans a punctuation run from every start position,
+ * which is quadratic on `'!!!!…a'`.
+ */
 function trimPunctuation(text: string): string {
-  return text.trim().replace(EDGE_PUNCTUATION, '');
+  const chars = Array.from(text.trim());
+  let start = 0;
+  let end = chars.length;
+  while (start < end && !NAME_CHARACTER.test(chars[start] ?? '')) start += 1;
+  while (end > start && !NAME_CHARACTER.test(chars[end - 1] ?? '')) end -= 1;
+  return chars.slice(start, end).join('');
+}
+
+/** Drop trailing characters found in `set`, without a regex `+$` scan. */
+function stripTrailing(text: string, set: string): string {
+  let end = text.length;
+  while (end > 0) {
+    const ch = text[end - 1];
+    if (ch === undefined || !set.includes(ch)) break;
+    end -= 1;
+  }
+  return text.slice(0, end);
 }
 
 const monthNameCache = new Map<string, NameEntry[]>();
@@ -641,10 +662,7 @@ function weekdayInWeek(weekday: number, offsetWeeks: number, ctx: Ctx): PlainDat
  * - A bare weekday is the nearest occurrence, forwards when `preferFuture`.
  */
 function parseNatural(src: string, ctx: Ctx): PlainDate | null {
-  const raw = src
-    .toLowerCase()
-    .replace(/[.,!?]+$/, '')
-    .trim();
+  const raw = stripTrailing(src.toLowerCase(), '.,!?').trim();
   const t = fold(raw);
   if (!t) return null;
 
@@ -905,6 +923,14 @@ function resolvePartsAfter(parts: DateParts, start: PlainDate): PlainDate | null
 const ISO_DATE_ONLY =
   /^(\d{4})-(\d{2})-(\d{2})(?:[T ]\d{1,2}:\d{2}(?::\d{2}(?:[.,]\d+)?)?\s*(?:z|[+-]\d{2}:?\d{2})?)?$/i;
 
+/**
+ * Longest input either public entry point will look at. The wordiest real date
+ * range ("Wednesday, September 4, 2026 through Wednesday, September 25, 2026")
+ * is under a hundred characters; anything longer is a paste, not a date, and is
+ * refused before any pattern runs so no regex or split can be fed a megabyte.
+ */
+const MAX_INPUT_LENGTH = 256;
+
 function parseResolved(src: string, ctx: Ctx): PlainDate | null {
   const iso = ISO_DATE_ONLY.exec(src);
   if (iso) {
@@ -934,7 +960,7 @@ function parseResolved(src: string, ctx: Ctx): PlainDate | null {
  * typos, not March 3.
  */
 export function parseDateString(text: string, options: ParseOptions): PlainDate | null {
-  if (typeof text !== 'string') return null;
+  if (typeof text !== 'string' || text.length > MAX_INPUT_LENGTH) return null;
   const src = preprocess(text);
   if (!src) return null;
   return parseResolved(src, context(options));
@@ -984,7 +1010,7 @@ function buildRange(leftText: string, rightText: string, ctx: Ctx): DateRange | 
  * `{ start, end: null }`, so half-typed input is still usable.
  */
 export function parseRangeString(text: string, options: ParseOptions): DateRange | null {
-  if (typeof text !== 'string') return null;
+  if (typeof text !== 'string' || text.length > MAX_INPUT_LENGTH) return null;
   const src = preprocess(text);
   if (!src) return null;
   const ctx = context(options);

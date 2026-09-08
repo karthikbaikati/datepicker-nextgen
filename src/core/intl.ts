@@ -15,6 +15,42 @@ import type {
   WeekdayInfo,
 } from './types';
 
+/* ----------------------------- host boundary ------------------------------ */
+
+const reportedOnce = new WeakSet<object>();
+
+/**
+ * Log a host member (callback, formatter, getter) that threw, then carry on.
+ * A throwing host function must never take the picker down, but eating the
+ * error silently would hide the host's bug — so every guard reports through
+ * here. Hot-path callers pass `once` (the offending function or object) so a
+ * formatter that fails for every cell is logged one time, not once per cell.
+ */
+export function reportHostError(member: string, error: unknown, once?: object): void {
+  if (once && (typeof once === 'object' || typeof once === 'function')) {
+    if (reportedOnce.has(once)) return;
+    reportedOnce.add(once);
+  }
+  console.error(`datepicker-nextgen: \`${member}\` threw and was ignored`, error);
+}
+
+/**
+ * Years a stored date may carry. `Date` reaches ±275,760 years (±8.64e15 ms);
+ * past that `toDate()` yields an Invalid Date and every `Intl` formatter throws
+ * `RangeError: Invalid time value`. The bounds stop well short so anything
+ * *derived* from a stored date — a grid's outside days, a 120-year decade
+ * screen, the year list at its maximum reach (`MAX_YEAR_SPAN`) — still formats.
+ */
+export const MIN_YEAR = -270_000;
+export const MAX_YEAR = 274_000;
+
+/** Pull a date inside [{@link MIN_YEAR}, {@link MAX_YEAR}]; returns the input by reference when it already is. */
+export function clampYear(date: PlainDate): PlainDate {
+  if (date.year < MIN_YEAR) return { year: MIN_YEAR, month: 1, day: 1 };
+  if (date.year > MAX_YEAR) return { year: MAX_YEAR, month: 12, day: 31 };
+  return date;
+}
+
 /* ------------------------------- primitives ------------------------------- */
 
 let cachedRuntimeLocale: string | undefined;
@@ -254,8 +290,65 @@ function dayDiff(start: PlainDate, end: PlainDate, semantics: RangeSemantics): n
   return semantics === 'nights' ? days : days + 1;
 }
 
+const FORMATTER_KEYS = Object.keys(defaultFormatters) as (keyof Formatters)[];
+
+type TextFn = (...args: unknown[]) => unknown;
+
+/**
+ * Read one member off a host-supplied object. A getter or Proxy trap that throws
+ * is the host's bug, not a reason for `createDatePicker()` to fail — it is
+ * reported once per object and read as "not provided".
+ */
+function readMember(source: object, key: string, owner: string): unknown {
+  try {
+    return (source as Record<string, unknown>)[key];
+  } catch (error) {
+    reportHostError(`${owner}.${key}`, error, source);
+    return undefined;
+  }
+}
+
+/**
+ * Wrap a host text function so it can neither throw nor return a non-string:
+ * either failure is reported once and answered by the default implementation.
+ * Numbers are the one non-string result honoured, since `day: (d) => d.day` is
+ * an obvious thing for a host to write.
+ */
+function guardTextFn(member: string, fn: TextFn, fallback: TextFn): TextFn {
+  return (...args) => {
+    let result: unknown;
+    try {
+      result = fn(...args);
+    } catch (error) {
+      reportHostError(member, error, fn);
+      return fallback(...args);
+    }
+    if (typeof result === 'string') return result;
+    if (typeof result === 'number' || typeof result === 'bigint') return String(result);
+    reportHostError(member, new TypeError(`expected a string, got ${typeof result}`), fn);
+    return fallback(...args);
+  };
+}
+
+/**
+ * Merge host formatters over the defaults. Every supplied member is wrapped by
+ * {@link guardTextFn}; a member that is not a function keeps the default. The
+ * no-override case returns the shared default object, so nothing is allocated.
+ */
 export function resolveFormatters(overrides?: Partial<Formatters>): Formatters {
-  return overrides ? { ...defaultFormatters, ...overrides } : defaultFormatters;
+  if (!overrides || typeof overrides !== 'object') return defaultFormatters;
+  const out = { ...defaultFormatters } as Record<keyof Formatters, Formatters[keyof Formatters]>;
+  for (const key of FORMATTER_KEYS) {
+    const override = readMember(overrides, key, 'formatters');
+    if (typeof override !== 'function') continue;
+    const fallback = defaultFormatters[key] as TextFn;
+    out[key] = guardTextFn(
+      `formatters.${key}`,
+      override as TextFn,
+      fallback,
+    ) as Formatters[typeof key];
+  }
+  return out as Formatters;
 }
 
 /* --------------------------------- labels --------------------------------- */
@@ -291,8 +384,39 @@ export const defaultLabels: Labels = {
   unavailableDate: 'Not available',
 };
 
+const LABEL_KEYS = Object.keys(defaultLabels) as (keyof Labels)[];
+
+/**
+ * Merge host labels over the defaults, member by member. Text members accept a
+ * string (or a number, stringified); function members accept a function —
+ * wrapped by {@link guardTextFn} — or a plain string, which becomes a constant
+ * announcement, the natural i18n mistake being `announceSelected: 'Selected'`.
+ * Anything else keeps the default.
+ */
 export function resolveLabels(overrides?: Partial<Labels>): Labels {
-  return overrides ? { ...defaultLabels, ...overrides } : defaultLabels;
+  if (!overrides || typeof overrides !== 'object') return defaultLabels;
+  const out = { ...defaultLabels } as Record<keyof Labels, Labels[keyof Labels]>;
+  for (const key of LABEL_KEYS) {
+    const value = readMember(overrides, key, 'labels');
+    if (value == null) continue;
+    const fallback = defaultLabels[key];
+    if (typeof fallback === 'function') {
+      if (typeof value === 'function') {
+        out[key] = guardTextFn(
+          `labels.${key}`,
+          value as TextFn,
+          fallback as TextFn,
+        ) as Labels[typeof key];
+      } else if (typeof value === 'string') {
+        out[key] = () => value;
+      }
+    } else if (typeof value === 'string') {
+      out[key] = value;
+    } else if (typeof value === 'number') {
+      out[key] = String(value);
+    }
+  }
+  return out as Labels;
 }
 
 /** Convenience re-export so consumers can build week labels without importing plain-date. */

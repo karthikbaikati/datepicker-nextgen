@@ -149,6 +149,17 @@ pre {
 /*  Utilities                                                                 */
 /* ========================================================================== */
 
+/* The <noscript> fallback in index.html. Lives here rather than as a `style`
+   attribute so the built page's Content-Security-Policy can forbid inline
+   styles outright. */
+.dx-noscript {
+  font-family: system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 3rem auto;
+  max-width: 40rem;
+}
+
 .dx-sr {
   position: absolute;
   inline-size: 1px;

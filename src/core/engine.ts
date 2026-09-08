@@ -11,6 +11,7 @@
 import { plainDateAdapter, toExternalValue } from './adapters';
 import {
   EMPTY_ZOOM,
+  MAX_NUMBER_OF_MONTHS,
   buildMonthOptions,
   buildMonths,
   buildWeekdays,
@@ -28,9 +29,13 @@ import {
   type ResolvedConstraints,
 } from './constraints';
 import {
+  MAX_YEAR,
+  MIN_YEAR,
+  clampYear,
   isRTL,
   localeFirstDayOfWeek,
   localeWeekendDays,
+  reportHostError,
   resolveFormatters,
   resolveLabels,
   resolveLocale,
@@ -259,6 +264,49 @@ function positiveCount(value: number | undefined, fallback: number): number {
   return Number.isFinite(count) && count > 0 ? count : fallback;
 }
 
+/**
+ * Overflow guard for the count arithmetic, in months: the whole formattable
+ * span (`MIN_YEAR`..`MAX_YEAR` from intl). This only keeps `count * step`
+ * finite and precise — the landing spot is decided by `clampYear` in
+ * `nextMonth`/`previousMonth`, which pulls an over-reaching target onto the
+ * first or last formattable month instead of letting `readDate` reject it
+ * (which would silently do nothing).
+ */
+const MAX_NAVIGATION_MONTHS = (MAX_YEAR - MIN_YEAR + 1) * 12;
+
+/**
+ * Coerce host input to a date the engine may store: `toPlainDate` settles the
+ * shape, `clampYear` the reach. Every date that enters through an option or an
+ * action goes through here, so nothing downstream can meet an unformattable year.
+ */
+function readDate(input: DateInput): PlainDate | null {
+  const date = toPlainDate(input);
+  return date ? clampYear(date) : null;
+}
+
+/** {@link readDate} for a whole selection. Returns the input by reference when nothing moved. */
+function boundValue(value: SelectionValue): SelectionValue {
+  let dates: PlainDate[] | null = null;
+  let index = 0;
+  for (const date of value.dates) {
+    const bounded = clampYear(date);
+    if (bounded !== date && dates === null) dates = value.dates.slice(0, index);
+    if (dates !== null) dates.push(bounded);
+    index += 1;
+  }
+  const start = value.range.start ? clampYear(value.range.start) : null;
+  const end = value.range.end ? clampYear(value.range.end) : null;
+  if (dates === null && start === value.range.start && end === value.range.end) return value;
+  return { ...value, dates: dates ?? value.dates, range: { start, end } };
+}
+
+function normalizeBounded(input: ValueInput, mode: SelectionMode): SelectionValue {
+  const value = normalizeValueInput(input, mode);
+  const bounded = boundValue(value);
+  // Clamping can fold two absurd dates onto one day; a second pass re-sorts and de-duplicates.
+  return bounded === value ? value : normalizeValueInput(bounded, mode);
+}
+
 function resolveFirstDayOfWeek(option: EngineOptions['firstDayOfWeek'], locale: string): number {
   if (option === undefined || option === 'locale') return localeFirstDayOfWeek(locale);
   const day = Math.trunc(Number(option));
@@ -283,11 +331,11 @@ export class DatePickerEngine implements DatePickerEngineApi {
 
     const settings = this.settings;
     const initial = options.value !== undefined ? options.value : (options.defaultValue ?? null);
-    const value = normalizeValueInput(initial ?? null, settings.mode);
+    const value = normalizeBounded(initial ?? null, settings.mode);
     const pending = isRangeMode(settings.mode) && !!value.range.start && !value.range.end;
     const selected = firstDateOf(value);
     const view =
-      toPlainDate(options.month) ?? toPlainDate(options.defaultMonth) ?? selected ?? settings.today;
+      readDate(options.month) ?? readDate(options.defaultMonth) ?? selected ?? settings.today;
 
     this.state = {
       value,
@@ -352,7 +400,7 @@ export class DatePickerEngine implements DatePickerEngineApi {
       focusedDate: st.focusedDate,
       hoveredDate: st.hoveredDate,
       evaluate,
-      dayMeta: this.options.dayMeta,
+      dayMeta: typeof this.options.dayMeta === 'function' ? this.options.dayMeta : undefined,
       labels: s.labels,
     });
 
@@ -469,12 +517,12 @@ export class DatePickerEngine implements DatePickerEngineApi {
       this.state.value = this.normalizeIncoming(this.options.value ?? null);
       this.syncPending();
     } else if (modeChanged) {
-      this.state.value = normalizeValueInput(this.state.value, s.mode);
+      this.state.value = normalizeBounded(this.state.value, s.mode);
       this.syncPending();
     }
 
     if (s.controlledMonth) {
-      const month = toPlainDate(this.options.month);
+      const month = readDate(this.options.month);
       if (month) this.state.viewMonth = startOfMonth(month);
     }
     this.state.viewMonth = this.clampMonth(this.state.viewMonth);
@@ -500,7 +548,7 @@ export class DatePickerEngine implements DatePickerEngineApi {
    * untouched and reports through `onInvalidSelection` — never silently.
    */
   select(date: DateInput, opts?: { field?: ActiveField }): void {
-    const target = toPlainDate(date);
+    const target = readDate(date);
     if (!target || this.destroyed) return;
     // A click on a greyed-out neighbouring-month day is ignored when the host
     // opted out of it; keyboard and programmatic picks pull the view instead.
@@ -510,7 +558,7 @@ export class DatePickerEngine implements DatePickerEngineApi {
 
   hover(date: DateInput | null): void {
     if (this.destroyed) return;
-    const next = date == null ? null : toPlainDate(date);
+    const next = date == null ? null : readDate(date);
     const current = this.state.hoveredDate;
     if (next === null ? current === null : current !== null && isSameDay(next, current)) return;
 
@@ -518,7 +566,7 @@ export class DatePickerEngine implements DatePickerEngineApi {
     this.state.previewRange = this.buildPreview();
     this.markDirty();
     this.notify();
-    this.options.onHoverChange?.(next);
+    this.invoke('onHoverChange', this.options.onHoverChange, next);
   }
 
   /**
@@ -526,7 +574,7 @@ export class DatePickerEngine implements DatePickerEngineApi {
    * documented ARIA grid behaviour; it just cannot be selected.
    */
   focusDate(date: DateInput, opts?: { scrollIntoView?: boolean }): void {
-    const target = toPlainDate(date);
+    const target = readDate(date);
     if (!target || this.destroyed) return;
 
     const s = this.settings;
@@ -540,7 +588,7 @@ export class DatePickerEngine implements DatePickerEngineApi {
     this.state.previewRange = this.buildPreview();
     this.markDirty();
     this.notify();
-    this.options.onFocusChange?.(next);
+    this.invoke('onFocusChange', this.options.onFocusChange, next);
   }
 
   moveFocus(step: FocusStep): void {
@@ -596,7 +644,9 @@ export class DatePickerEngine implements DatePickerEngineApi {
     let produced: SelectionValue | null = null;
     try {
       produced = normalizePresetResult(preset.getValue(this.presetContext()), s.mode);
-    } catch {
+    } catch (error) {
+      // A preset that only throws when applied would otherwise fail silently.
+      reportHostError(`presets[${preset.id}].getValue`, error);
       produced = null;
     }
     if (!produced) return;
@@ -606,7 +656,7 @@ export class DatePickerEngine implements DatePickerEngineApi {
 
     const applied = preset;
     this.applyValue(clamped, { reason: 'preset', preset: applied, jumpToStart: true }, () => {
-      this.options.onPresetApply?.(applied, clamped);
+      this.invoke('onPresetApply', this.options.onPresetApply, applied, clamped);
     });
   }
 
@@ -646,7 +696,7 @@ export class DatePickerEngine implements DatePickerEngineApi {
     const next = ZOOM_ORDER[zoomIndex(this.state.view) - 1];
     if (!next) return;
 
-    const target = date === undefined ? null : toPlainDate(date);
+    const target = date === undefined ? null : readDate(date);
     if (target) this.applyViewMonth(target);
     this.state.view = next;
     this.markDirty();
@@ -654,7 +704,7 @@ export class DatePickerEngine implements DatePickerEngineApi {
   }
 
   goToMonth(date: DateInput): void {
-    const target = toPlainDate(date);
+    const target = readDate(date);
     if (!target || this.destroyed) return;
     if (!this.applyViewMonth(target)) return;
     this.markDirty();
@@ -662,11 +712,18 @@ export class DatePickerEngine implements DatePickerEngineApi {
   }
 
   nextMonth(count = 1): void {
-    this.goToMonth(addMonths(this.state.viewMonth, positiveCount(count, 1) * this.viewStep()));
+    // Clamp before `goToMonth`: a target past the representable range would
+    // otherwise be nulled by `readDate` and the call would be a silent no-op.
+    this.goToMonth(clampYear(addMonths(this.state.viewMonth, this.navigationMonths(count))));
   }
 
   previousMonth(count = 1): void {
-    this.goToMonth(addMonths(this.state.viewMonth, -positiveCount(count, 1) * this.viewStep()));
+    this.goToMonth(clampYear(addMonths(this.state.viewMonth, -this.navigationMonths(count))));
+  }
+
+  /** Months one `nextMonth(count)` covers at the current zoom level, capped so the view stays representable. */
+  private navigationMonths(count: number): number {
+    return Math.min(positiveCount(count, 1) * this.viewStep(), MAX_NAVIGATION_MONTHS);
   }
 
   goToToday(): void {
@@ -683,7 +740,7 @@ export class DatePickerEngine implements DatePickerEngineApi {
     this.state.previewRange = this.buildPreview();
     this.markDirty();
     this.notify();
-    if (refocused) this.options.onFocusChange?.(target);
+    if (refocused) this.invoke('onFocusChange', this.options.onFocusChange, target);
   }
 
   /* ---------------------------------- time --------------------------------- */
@@ -729,15 +786,18 @@ export class DatePickerEngine implements DatePickerEngineApi {
       preferFuture: true,
     };
 
+    // Parser output is re-read like any other host input: text is a boundary too.
     if (isRangeMode(s.mode) && !field) {
       const range = parseRangeString(text, options);
-      if (!range?.start) return false;
-      if (!this.pick(range.start, { reason: 'input', field: 'start', restart: true })) return false;
-      if (!range.end) return true;
-      return this.pick(range.end, { reason: 'input' });
+      const start = range?.start ? readDate(range.start) : null;
+      if (!start) return false;
+      if (!this.pick(start, { reason: 'input', field: 'start', restart: true })) return false;
+      const end = range?.end ? readDate(range.end) : null;
+      if (!end) return true;
+      return this.pick(end, { reason: 'input' });
     }
 
-    const date = parseDateString(text, options);
+    const date = readDate(parseDateString(text, options));
     if (!date) return false;
     return this.pick(date, field ? { reason: 'input', field } : { reason: 'input' });
   }
@@ -854,15 +914,42 @@ export class DatePickerEngine implements DatePickerEngineApi {
     this.snapshot = null;
   }
 
-  /** Copy the set first: a listener is allowed to unsubscribe while being notified. */
+  /**
+   * Copy the set first: a listener is allowed to unsubscribe while being notified.
+   * One listener throwing must not starve the ones queued after it.
+   */
   private notify(): void {
     if (this.listeners.size === 0) return;
-    for (const listener of [...this.listeners]) listener();
+    for (const listener of [...this.listeners]) {
+      try {
+        listener();
+      } catch (error) {
+        reportHostError('subscribe listener', error);
+      }
+    }
   }
 
   private emitChange(value: SelectionValue, meta: ChangeMeta): void {
-    this.options.onChange?.(value, meta);
-    if (meta.isComplete) this.options.onComplete?.(value, meta);
+    this.invoke('onChange', this.options.onChange, value, meta);
+    if (meta.isComplete) this.invoke('onComplete', this.options.onComplete, value, meta);
+  }
+
+  /**
+   * Run one host `on*` callback. State is committed before any callback fires,
+   * so a throw cannot corrupt anything — it is reported and the call that
+   * triggered it returns normally, exactly as it does for a `subscribe` listener.
+   */
+  private invoke<A extends unknown[]>(
+    name: string,
+    callback: ((...args: A) => void) | undefined,
+    ...args: A
+  ): void {
+    if (typeof callback !== 'function') return;
+    try {
+      callback(...args);
+    } catch (error) {
+      reportHostError(`options.${name}`, error);
+    }
   }
 
   private constraintContext(): ConstraintContext {
@@ -913,7 +1000,7 @@ export class DatePickerEngine implements DatePickerEngineApi {
 
     const evaluation = evaluateDate(date, s.constraints, this.constraintContext());
     if (!evaluation.selectable) {
-      this.options.onInvalidSelection?.(date, evaluation);
+      this.invoke('onInvalidSelection', this.options.onInvalidSelection, date, evaluation);
       return false;
     }
 
@@ -994,7 +1081,7 @@ export class DatePickerEngine implements DatePickerEngineApi {
   }
 
   private normalizeIncoming(input: ValueInput): SelectionValue {
-    const next = normalizeValueInput(input, this.settings.mode);
+    const next = normalizeBounded(input, this.settings.mode);
     return !next.times && this.state.times ? withTimes(next, this.state.times) : next;
   }
 
@@ -1025,9 +1112,11 @@ export class DatePickerEngine implements DatePickerEngineApi {
 
   private clampMonth(month: PlainDate): PlainDate {
     const s = this.settings;
-    if (!s.restrictNavigation) return month;
+    // Derived months (`viewMonth ± n`) may overshoot the stored bounds; the view itself never does.
+    const bounded = clampYear(month);
+    let out = bounded === month ? month : startOfMonth(bounded);
+    if (!s.restrictNavigation) return out;
     const { minDate, maxDate } = s.constraints;
-    let out = month;
     if (maxDate) {
       // The last month the strip may start on still shows `maxDate` in its last panel.
       const last = addMonths(startOfMonth(maxDate), -(s.numberOfMonths - 1));
@@ -1048,7 +1137,7 @@ export class DatePickerEngine implements DatePickerEngineApi {
 
     if (!s.controlledMonth) this.state.viewMonth = target;
     this.state.announcement = s.labels.announceMonth(s.formatters.monthYear(target, s.locale));
-    this.options.onMonthChange?.(target);
+    this.invoke('onMonthChange', this.options.onMonthChange, target);
     return true;
   }
 
@@ -1185,7 +1274,9 @@ export class DatePickerEngine implements DatePickerEngineApi {
 
     const todaySame = before !== null && before.today === o.today && before.timeZone === o.timeZone;
     const today =
-      todaySame && cached ? cached.today : (toPlainDate(o.today) ?? currentDate(o.timeZone));
+      todaySame && cached
+        ? cached.today
+        : (readDate(o.today) ?? clampYear(currentDate(o.timeZone)));
 
     const constraints =
       cached && before !== null && todaySame && !optionsDiffer(before, o, CONSTRAINT_KEYS)
@@ -1223,7 +1314,7 @@ export class DatePickerEngine implements DatePickerEngineApi {
       weekendDays,
       today,
       rangeSemantics,
-      numberOfMonths: positiveCount(o.numberOfMonths, 1),
+      numberOfMonths: Math.min(MAX_NUMBER_OF_MONTHS, positiveCount(o.numberOfMonths, 1)),
       fixedWeeks: o.fixedWeeks !== false,
       showOutsideDays: o.showOutsideDays !== false,
       selectOutsideDays: o.selectOutsideDays !== false,

@@ -11,7 +11,7 @@
  * Nothing here mutates its input and every object handed back is freshly built, so
  * a snapshot can be memoized by reference upstream.
  */
-import { weekdayInfos } from './intl';
+import { MAX_YEAR, MIN_YEAR, reportHostError, weekdayInfos } from './intl';
 import {
   addMonths,
   endOfMonth,
@@ -98,6 +98,21 @@ const IN_RANGE_TEXT = 'in range';
 
 const DEFAULT_YEAR_SPAN = 100;
 
+/**
+ * Widest navigation reach honoured either side of the visible year. A year
+ * `<select>` past a thousand entries is unusable anyway, and every entry costs
+ * an `Intl` format — `yearRange: 1e6` alone pinned the thread for seconds.
+ */
+export const MAX_YEAR_SPAN = 1_000;
+
+/**
+ * Most months one calendar strip will build. Every month is 42 day objects plus
+ * a formatter call each, so the cost is linear in this number and nothing else
+ * bounds it: 40,000 took seconds, 1,000,000 exhausted the heap. Two years is
+ * already more than any scrolling layout renders at once.
+ */
+export const MAX_NUMBER_OF_MONTHS = 24;
+
 /** Three columns by four rows — the same geometry at every zoomed-out level. */
 const ZOOM_CELL_COUNT = 12;
 
@@ -170,7 +185,7 @@ export function buildMonths(input: BuildCalendarInput): MonthInfo[] {
 
   const firstDayOfWeek = normalizeWeekday(input.firstDayOfWeek);
   const monthCount = Number.isFinite(input.numberOfMonths)
-    ? Math.max(1, Math.trunc(input.numberOfMonths))
+    ? Math.min(MAX_NUMBER_OF_MONTHS, Math.max(1, Math.trunc(input.numberOfMonths)))
     : 1;
   const weekdays = buildWeekdays(locale, firstDayOfWeek, input.weekendDays);
 
@@ -253,7 +268,23 @@ export function buildMonths(input: BuildCalendarInput): MonthInfo[] {
     // must not be labelled or reachable by keyboard/click.
     const hidden = !inCurrentMonth && !showOutsideDays;
 
-    const meta = inCurrentMonth && dayMeta ? (dayMeta(date) ?? undefined) : undefined;
+    // `dayMeta` is host code in the hottest loop there is. A throw for one date
+    // (a missing price, a bad lookup) leaves that cell bare; it must never leave
+    // `getSnapshot()`. Reading `holiday` here also rejects a Proxy whose traps
+    // throw before any renderer touches it.
+    let meta: DayMeta | undefined;
+    let isHoliday = false;
+    if (inCurrentMonth && dayMeta) {
+      try {
+        const produced = dayMeta(date);
+        if (produced != null && typeof produced === 'object') {
+          isHoliday = !!produced.holiday;
+          meta = produced;
+        }
+      } catch (error) {
+        reportHostError('dayMeta', error, dayMeta);
+      }
+    }
     const evaluation = hidden ? HIDDEN_DAY_EVALUATION : evaluate(date);
     const isDisabled = !evaluation.selectable;
     const reason = isDisabled ? evaluation.reason : undefined;
@@ -323,7 +354,7 @@ export function buildMonths(input: BuildCalendarInput): MonthInfo[] {
       isOutsideBounds: reason === 'before-min' || reason === 'after-max',
       isFocused: isFocusCell,
       isHovered: hoverEpoch !== null && epoch === hoverEpoch,
-      isHoliday: !!meta?.holiday,
+      isHoliday,
       isWeekStart: column === 0,
       isWeekEnd: column === 6,
       disabledReason: reason,
@@ -401,7 +432,9 @@ export function buildMonths(input: BuildCalendarInput): MonthInfo[] {
 export type YearSpan = number | { past?: number; future?: number };
 
 function toReach(value: number | undefined): number {
-  return Number.isFinite(value) ? Math.max(0, Math.trunc(value as number)) : DEFAULT_YEAR_SPAN;
+  return Number.isFinite(value)
+    ? Math.min(MAX_YEAR_SPAN, Math.max(0, Math.trunc(value as number)))
+    : DEFAULT_YEAR_SPAN;
 }
 
 /** Normalize a {@link YearSpan} into an explicit backwards/forwards reach. */
@@ -426,8 +459,10 @@ export function buildYearOptions(
   span: YearSpan = DEFAULT_YEAR_SPAN,
 ): CalendarSnapshot['years'] {
   const { past, future } = resolveYearSpan(span);
-  let first = view.year - past;
-  let last = view.year + future;
+  // The engine never shows a year outside [MIN_YEAR, MAX_YEAR], so the list must
+  // not offer one — and every entry past the ceiling would throw in `Intl`.
+  let first = Math.max(MIN_YEAR, view.year - past);
+  let last = Math.min(MAX_YEAR, view.year + future);
   if (min && min.year > first) first = min.year;
   if (max && max.year < last) last = max.year;
   // The bounds can exclude the year currently on screen (a controlled month outside
