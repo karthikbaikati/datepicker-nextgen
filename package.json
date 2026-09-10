@@ -1,6 +1,6 @@
 {
   "name": "datepicker-nextgen",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A headless-first, timezone-safe, fully accessible date picker for React and vanilla JS. Single, range, multiple, week, month, quarter and year selection with presets, constraints, per-day decorations and complete theming.",
   "keywords": [
     "datepicker",

@@ -15,6 +15,7 @@ import { memo } from 'react';
 import type { ButtonHTMLAttributes, CSSProperties, ReactElement, ReactNode } from 'react';
 
 import type { DayInfo } from '../../core/types';
+import { dayMetaDots, dayMetaText } from '../use-date-picker';
 import type { DatePickerProps as DomProps } from '../use-date-picker';
 
 /** Props for {@link DayCell}. */
@@ -45,37 +46,29 @@ function isPlaceholder(day: DayInfo): boolean {
   return !day.inCurrentMonth && day.label === '';
 }
 
-function dotColor(dot: string | { color: string; label?: string }): string {
-  return typeof dot === 'string' ? dot : dot.color;
-}
-
-function dotLabel(dot: string | { color: string; label?: string }): string | undefined {
-  return typeof dot === 'string' ? undefined : dot.label;
-}
-
 function DayContent({ day }: { day: DayInfo }): ReactElement {
   const meta = day.meta;
-  const dots = meta?.dots;
+  const note = dayMetaText(meta?.note);
+  const badge = dayMetaText(meta?.badge);
+  const dots = dayMetaDots(meta?.dots);
   return (
     <>
       <span className="dpng-day__bg" aria-hidden="true" />
       <span className="dpng-day__number">{day.label}</span>
-      {meta?.note ? <span className="dpng-day__note">{meta.note}</span> : null}
-      {dots && dots.length > 0 ? (
+      {note !== undefined ? <span className="dpng-day__note">{note}</span> : null}
+      {dots.length > 0 ? (
         <span className="dpng-day__dots">
-          {dots.slice(0, 3).map((dot, index) => (
+          {dots.map((dot, index) => (
             <span
               key={`${day.key}-dot-${index}`}
               className="dpng-day__dot"
-              style={{ backgroundColor: dotColor(dot) }}
-              title={dotLabel(dot)}
+              style={{ backgroundColor: dot.color }}
+              title={dot.label}
             />
           ))}
         </span>
       ) : null}
-      {meta?.badge !== undefined && meta.badge !== null ? (
-        <span className="dpng-day__badge">{meta.badge}</span>
-      ) : null}
+      {badge !== undefined ? <span className="dpng-day__badge">{badge}</span> : null}
     </>
   );
 }

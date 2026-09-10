@@ -10,6 +10,7 @@
  *
  * Nothing here constructs a `Date`; all arithmetic goes through `plain-date`.
  */
+import { MAX_YEAR, MIN_YEAR, clampYear, reportHostError } from './intl';
 import {
   addDays,
   clampDate,
@@ -72,6 +73,10 @@ export interface ResolvedConstraints {
 
 /** Max days {@link findSelectable} / {@link nextBlockedAfter} will walk before giving up. */
 const DEFAULT_WALK = 366;
+
+/** The representable span as epoch days — spans are clipped to it, so no stored range can leave it. */
+const LOWEST_DAY = toEpochDay({ year: MIN_YEAR, month: 1, day: 1 });
+const HIGHEST_DAY = toEpochDay({ year: MAX_YEAR, month: 12, day: 31 });
 
 /* -------------------------------------------------------------------------- */
 /*                            Shared evaluations                              */
@@ -201,7 +206,10 @@ function toSpan(input: DateRangeInput): [number, number] | null {
   if (!start && !end) return null;
   const a = toEpochDay(start ?? (end as PlainDate));
   const b = toEpochDay(end ?? (start as PlainDate));
-  return a <= b ? [a, b] : [b, a];
+  const lo = a <= b ? a : b;
+  const hi = a <= b ? b : a;
+  if (hi < LOWEST_DAY || lo > HIGHEST_DAY) return null;
+  return [Math.max(lo, LOWEST_DAY), Math.min(hi, HIGHEST_DAY)];
 }
 
 function toCompleteRange(input: DateRangeInput): CompleteDateRange | null {
@@ -368,8 +376,10 @@ export function resolveConstraints(
 ): ResolvedConstraints {
   const rangeSemantics: RangeSemantics = options.rangeSemantics === 'days' ? 'days' : 'nights';
 
-  let minDate = toPlainDate(options.minDate);
-  let maxDate = toPlainDate(options.maxDate);
+  const rawMin = toPlainDate(options.minDate);
+  const rawMax = toPlainDate(options.maxDate);
+  let minDate = rawMin ? clampYear(rawMin) : null;
+  let maxDate = rawMax ? clampYear(rawMax) : null;
   const pastCutoff = options.disablePast ? today : null;
   const futureCutoff = options.disableFuture ? today : null;
   if (pastCutoff) minDate = maxOf(minDate, pastCutoff);
@@ -429,7 +439,7 @@ export function resolveConstraints(
     maxSelections: positiveInt(options.maxSelections),
     rollingSelection: options.rollingSelection === true,
     preventCrossingBlocked: options.preventCrossingBlocked !== false,
-    custom: options.isDateUnavailable,
+    custom: typeof options.isDateUnavailable === 'function' ? options.isDateUnavailable : undefined,
     rangeSemantics,
   };
 
@@ -524,16 +534,23 @@ function evaluateCustom(
 ): DayEvaluation | null {
   const custom = c.custom;
   if (!custom) return null;
-  const result = custom(date, ctx);
-  if (result === true) return EVAL_CUSTOM;
-  if (result === false || result == null || typeof result !== 'object') return null;
-  if (result.selectable) return null;
-  if (result.reason && result.message) return result;
-  return {
-    selectable: false,
-    reason: result.reason ?? 'custom',
-    message: result.message ?? EVAL_CUSTOM.message,
-  };
+  try {
+    const result = custom(date, ctx);
+    if (result === true) return EVAL_CUSTOM;
+    if (result === false || result == null || typeof result !== 'object') return null;
+    if (result.selectable) return null;
+    if (result.reason && result.message) return result;
+    return {
+      selectable: false,
+      reason: result.reason ?? 'custom',
+      message: result.message ?? EVAL_CUSTOM.message,
+    };
+  } catch (error) {
+    // Fail closed: a rule that cannot run cannot vouch for the day, and an
+    // availability check that is down must not let bookings through.
+    reportHostError('isDateUnavailable', error, custom);
+    return EVAL_CUSTOM;
+  }
 }
 
 /**

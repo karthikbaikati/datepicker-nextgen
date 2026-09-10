@@ -12,7 +12,7 @@
  *    hand the engine a value that violates the picker's constraints. When
  *    clamping is impossible the chip resolves to `disabled`.
  */
-import { formatDate, runtimeLocale } from './intl';
+import { clampYear, formatDate, reportHostError, runtimeLocale } from './intl';
 import {
   addDays,
   addMonths,
@@ -92,8 +92,29 @@ export function normalizePresetResult(
   result: SelectionValue | Partial<SelectionValue> | DateRange | PlainDate | null | undefined,
   mode: SelectionMode,
 ): SelectionValue | null {
-  if (result == null) return null;
-  if (isPlainDate(result)) return coerce([result], emptyRange(), mode, undefined);
+  // `in` throws on a primitive, and a Proxy can throw from any trap, so the
+  // shape is read inside a guard: a value the engine cannot read is no value.
+  if (result == null || typeof result !== 'object') return null;
+  let shape: PresetShape | null;
+  try {
+    shape = readPresetShape(result);
+  } catch (error) {
+    reportHostError('preset.getValue result', error, result);
+    return null;
+  }
+  if (!shape) return null;
+  return coerce(shape.dates, shape.range, mode, shape.times);
+}
+
+interface PresetShape {
+  dates: readonly (PlainDate | null | undefined)[];
+  range: DateRange;
+  times: SelectionValue['times'] | undefined;
+}
+
+/** Pull the dates out of whichever documented shape `getValue` returned. */
+function readPresetShape(result: object): PresetShape | null {
+  if (isPlainDate(result)) return { dates: [result], range: emptyRange(), times: undefined };
 
   const candidate = result as Partial<SelectionValue> & Partial<DateRange>;
   const looksLikeSelection = 'dates' in candidate || 'range' in candidate;
@@ -104,8 +125,7 @@ export function normalizePresetResult(
   const range: DateRange = looksLikeSelection
     ? { start: candidate.range?.start ?? null, end: candidate.range?.end ?? null }
     : { start: candidate.start ?? null, end: candidate.end ?? null };
-
-  return coerce(dates, range, mode, candidate.times);
+  return { dates, range, times: candidate.times };
 }
 
 function coerce(
@@ -146,8 +166,10 @@ function emptyRange(): DateRange {
   return { start: null, end: null };
 }
 
+/** Every date a preset yields is bounded here, so a custom `getValue` cannot hand the engine year 1e9. */
 function toPlain(date: PlainDate | null | undefined): PlainDate | null {
-  return date ? toPlainDate(date) : null;
+  const plain = date ? toPlainDate(date) : null;
+  return plain ? clampYear(plain) : null;
 }
 
 function sortedUnique(input: readonly (PlainDate | null | undefined)[]): PlainDate[] {
@@ -491,7 +513,7 @@ function isPresetLike(value: unknown): value is DatePreset {
 export function normalizePresets(
   input: readonly (DatePreset | string)[] | undefined,
 ): DatePreset[] {
-  if (!input) return [];
+  if (!Array.isArray(input)) return [];
   const out: DatePreset[] = [];
   const seen = new Set<string>();
   for (const entry of input) {
@@ -596,7 +618,8 @@ export function resolvePresets(
 function safeGetValue(preset: DatePreset, ctx: PresetContext): PresetResult {
   try {
     return preset.getValue(ctx);
-  } catch {
+  } catch (error) {
+    reportHostError(`presets["${preset.id}"].getValue`, error, preset.getValue);
     return null;
   }
 }

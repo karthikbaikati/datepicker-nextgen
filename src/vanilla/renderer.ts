@@ -284,13 +284,81 @@ function applyDayFlags(node: HTMLElement, mask: number): void {
   setFlag(node, 'data-focused', (mask & F_FOCUSED) !== 0);
 }
 
+/* ------------------------------ dayMeta shape ----------------------------- */
+
+/*
+ * `dayMeta` is a consumer callback, so its result is validated at the render
+ * boundary rather than trusted: a string where an array was promised, or a
+ * `null` inside `dots`, must degrade to "no decoration", never throw. Values
+ * are only ever written as text or attribute values. The React renderer
+ * applies the same rules so both produce identical cells.
+ */
+
+interface DayDot {
+  readonly color: string;
+  readonly label: string | undefined;
+}
+
+interface NormalizedMeta {
+  readonly note: string | undefined;
+  readonly badge: string | undefined;
+  readonly tooltip: string | undefined;
+  readonly className: string;
+  readonly dots: readonly DayDot[];
+  readonly style: Record<string, unknown> | undefined;
+}
+
+const MAX_DOTS = 3;
+
+/** Text-only fields: strings and numbers render, everything else is dropped. */
+function metaText(value: unknown): string | undefined {
+  if (typeof value === 'string') return value === '' ? undefined : value;
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return undefined;
+}
+
+function metaDots(value: unknown): DayDot[] {
+  if (!Array.isArray(value)) return [];
+  const out: DayDot[] = [];
+  for (const dot of value as readonly unknown[]) {
+    if (typeof dot === 'string') {
+      out.push({ color: dot, label: undefined });
+    } else if (typeof dot === 'object' && dot !== null) {
+      const { color, label } = dot as { color?: unknown; label?: unknown };
+      if (typeof color === 'string') {
+        out.push({ color, label: typeof label === 'string' ? label : undefined });
+      }
+    }
+    if (out.length === MAX_DOTS) break;
+  }
+  return out;
+}
+
+function metaStyle(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+function normalizeMeta(meta: DayMeta | undefined | null): NormalizedMeta | undefined {
+  if (typeof meta !== 'object' || meta === null) return undefined;
+  const className = typeof meta.className === 'string' ? meta.className.trim() : '';
+  return {
+    note: metaText(meta.note),
+    badge: metaText(meta.badge),
+    tooltip: metaText(meta.tooltip),
+    className,
+    dots: metaDots(meta.dots),
+    style: metaStyle(meta.style),
+  };
+}
+
 /** Cheap change detector for the optional decoration layer. */
-function metaSignature(meta: DayMeta | undefined): string {
+function metaSignature(meta: NormalizedMeta | undefined): string {
   if (!meta) return '';
-  const dots = meta.dots
-    ? meta.dots.map((dot) => (typeof dot === 'string' ? dot : dot.color)).join('|')
-    : '';
-  return `${meta.note ?? ''} ${meta.badge ?? ''} ${dots} ${meta.tooltip ?? ''} ${meta.className ?? ''}`;
+  let dots = '';
+  for (const dot of meta.dots) dots += `${dot.color}|${dot.label ?? ''}|`;
+  return `${meta.note ?? ''} ${meta.badge ?? ''} ${dots} ${meta.tooltip ?? ''} ${meta.className}`;
 }
 
 interface DayCell {
@@ -808,13 +876,13 @@ export function createRenderer(doc: Document, config: RenderConfig = {}): DatePi
     }
   }
 
-  function renderDayMeta(cell: DayCell, meta: DayMeta | undefined): void {
+  function renderDayMeta(cell: DayCell, meta: NormalizedMeta | undefined): void {
     const signature = metaSignature(meta);
     if (signature === cell.meta) return;
     cell.meta = signature;
 
     const note = meta?.note;
-    if (note) {
+    if (note !== undefined) {
       if (!cell.note) cell.note = el(doc, 'span', 'dpng-day__note', cell.node);
       setText(cell.note, note);
     } else if (cell.note) {
@@ -826,12 +894,10 @@ export function createRenderer(doc: Document, config: RenderConfig = {}): DatePi
     if (dots && dots.length > 0) {
       if (!cell.dots) cell.dots = el(doc, 'span', 'dpng-day__dots', cell.node);
       cell.dots.textContent = '';
-      for (const dot of dots.slice(0, 3)) {
+      for (const dot of dots) {
         const node = el(doc, 'span', 'dpng-day__dot', cell.dots);
-        const color = typeof dot === 'string' ? dot : dot.color;
-        const label = typeof dot === 'string' ? undefined : dot.label;
-        node.style.backgroundColor = color;
-        if (label) node.title = label;
+        node.style.backgroundColor = dot.color;
+        if (dot.label) node.title = dot.label;
       }
     } else if (cell.dots) {
       cell.dots.remove();
@@ -839,9 +905,9 @@ export function createRenderer(doc: Document, config: RenderConfig = {}): DatePi
     }
 
     const badge = meta?.badge;
-    if (badge !== undefined && badge !== null && badge !== '') {
+    if (badge !== undefined) {
       if (!cell.badge) cell.badge = el(doc, 'span', 'dpng-day__badge', cell.node);
-      setText(cell.badge, String(badge));
+      setText(cell.badge, badge);
     } else if (cell.badge) {
       cell.badge.remove();
       cell.badge = null;
@@ -862,7 +928,8 @@ export function createRenderer(doc: Document, config: RenderConfig = {}): DatePi
        geometry never shifts, but must not be clickable or announced. */
     const hidden = !day.inCurrentMonth && day.label === '';
     const mask = dayMask(day, hidden);
-    const extra = day.meta?.className ?? '';
+    const meta = normalizeMeta(day.meta);
+    const extra = meta?.className ?? '';
     if (mask !== cell.mask || extra !== cell.extra) {
       cell.mask = mask;
       cell.extra = extra;
@@ -895,12 +962,14 @@ export function createRenderer(doc: Document, config: RenderConfig = {}): DatePi
       cell.node.setAttribute('tabindex', tabIndex);
     }
 
-    renderDayMeta(cell, day.meta);
+    renderDayMeta(cell, meta);
 
-    const style = day.meta?.style;
+    const style = meta?.style;
     if (style) {
       for (const [property, value] of Object.entries(style)) {
-        cell.node.style.setProperty(property, String(value));
+        if (typeof value === 'string' || typeof value === 'number') {
+          cell.node.style.setProperty(property, String(value));
+        }
       }
       cell.styled = true;
     } else if (cell.styled) {

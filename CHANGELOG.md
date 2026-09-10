@@ -10,6 +10,48 @@ public API; renaming one is a breaking change.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-09-08
+
+Hardening release. No API changes; a few inputs that were previously accepted are now bounded or
+rejected, listed under **Changed**.
+
+### Fixed
+
+- Relative offsets that land before year 0 (`-9999y`, `9999 years ago`) produced a negative month;
+  `addMonths` now uses floor-modulo.
+- `toPlainDate` accepted fractional fields, which then surfaced as cell keys like `2027-04-1.59…`.
+- Epoch-day conversion was off by one for every date before 0000-03-01.
+- Any date outside the range `Date` can represent reached `Intl` and threw `RangeError` from
+  `getSnapshot()`, `select()`, `hover()`, `goToMonth()`, `focusDate()` and `setValue()`.
+- A throwing host callback (`dayMeta`, a formatter, a label function, `isDateUnavailable`,
+  `presets[].getValue`, any `on*` handler, a `subscribe` listener) crashed the engine, and one
+  throwing listener starved every listener after it.
+- Malformed `dayMeta` shapes (`dots: 'red'`, `dots: [null]`, an object as `note`) crashed both
+  renderers.
+- A nested-array JSON bomb in a custom-element list attribute overflowed the stack inside
+  `attributeChangedCallback`.
+- Quadratic regular expressions made a 100 kB paste into `parseInput` or the `value` attribute
+  freeze the page for seconds.
+- `nextMonth` / `previousMonth` with a count past the representable range were silent no-ops.
+
+### Changed
+
+- `numberOfMonths` is capped at 24, `yearRange` at 1000 years per side.
+- `parseDateString`, `parseRangeString` and the custom element's `value` attribute refuse input
+  longer than 256 characters.
+- `toPlainDate` returns `null` for non-integer fields and for years outside `-271820` … `275759`.
+- Failures inside host-supplied callbacks are reported once via `console.error` and the default is
+  used instead of propagating.
+
+### Security
+
+- The demo site ships a strict, hash-allowlisted Content-Security-Policy and a referrer policy,
+  injected at build time.
+- Dependabot, CodeQL (`security-extended`) and an `npm audit` gate run in CI; every GitHub Action
+  is pinned to a commit SHA; workflows run with least-privilege permissions.
+- `SECURITY.md` now carries a project-specific threat model and a `THIRD-PARTY-NOTICES.md`
+  records external works.
+
 ## [1.0.0] - 2026-08-27
 
 Initial public release.
@@ -98,5 +140,6 @@ under `import`, `.d.cts` under `require` — so CJS consumers on `moduleResoluti
 too. Three tree-shakeable entry points (`.`, `./core`, `./vanilla`), declared `sideEffects`, and npm
 provenance on publish.
 
-[Unreleased]: https://github.com/karthikbaikati/datepicker-nextgen/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/karthikbaikati/datepicker-nextgen/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/karthikbaikati/datepicker-nextgen/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/karthikbaikati/datepicker-nextgen/releases/tag/v1.0.0
